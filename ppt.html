@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aurora 2025: A Renaissance Celebration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Cinzel+Decorative:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "EB Garamond", serif;
+        background-color: #fdf3e7; /* Parchment color */
+        background-image: url("https://www.transparenttextures.com/patterns/old-wall.png");
+      }
+      .slide-title,
+      .brand-title {
+        font-family: "Cinzel Decorative", serif;
+        font-weight: 700;
+      }
+      .slide {
+        transition: opacity 0.6s ease-in-out;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+      }
+      .hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .visible {
+        opacity: 1;
+      }
+      .slide-content {
+        transform: translateY(-5%);
+      }
+      .nav-button {
+        transition: all 0.3s ease;
+      }
+      .nav-button:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+      .nav-button:hover:not(:disabled) {
+        transform: scale(1.1);
+        background-color: #a0522d; /* Sienna */
+      }
+    </style>
+  </head>
+  <body
+    class="flex flex-col items-center justify-center min-h-screen text-[#4C3D3D] p-4 overflow-hidden"
+  >
+    <!-- Presentation Container -->
+    <div
+      id="presentation-container"
+      class="w-full max-w-5xl aspect-[16/9] bg-white/50 rounded-2xl shadow-2xl relative overflow-hidden border-8 border-double border-[#C4A484]"
+    >
+      <!-- Slides Wrapper -->
+      <div id="slides-wrapper" class="w-full h-full">
+        <!-- Slide 1: Title -->
+        <div
+          class="slide visible p-8 md:p-12 flex flex-col justify-center items-center text-center"
+        >
+          <div class="slide-content">
+            <h1 class="slide-title text-4xl md:text-6xl text-[#A0522D] mb-4">
+              Aurora 2025
+            </h1>
+            <h2 class="text-2xl md:text-4xl mb-8">A Renaissance Celebration</h2>
+            <p class="text-lg md:text-xl font-semibold">T.E. Report</p>
+            <div class="mt-8 text-base md:text-lg">
+              <p>
+                <strong>By:</strong> Shvet Ghare, Vishal Badapandara, Naitik
+                Butani, Vineet Chudasama, Shreya Gharat
+              </p>
+              <p><strong>Supervisor:</strong> Ms. Marina Thomas</p>
+              <p class="mt-4 italic">Department of Computer Engineering</p>
+              <p class="italic">
+                Universal College of Engineering, Kaman Vasai
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2: Certificate -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Certificate
+          </h1>
+          <p class="text-base md:text-lg mb-4">
+            This is to certify that the report is the bonafide work of:
+          </p>
+          <ul class="list-disc list-inside space-y-2 text-base md:text-lg ml-4">
+            <li>Shvet Ghare (26)</li>
+            <li>Vishal Badapandara (04)</li>
+            <li>Naitik Butani (12)</li>
+            <li>Vinit Chudasama (14)</li>
+            <li>Shreya Gharat (25)</li>
+          </ul>
+          <p class="text-base md:text-lg mt-4">
+            Submitted to the University of Mumbai in partial fulfillment of the
+            requirements for the Third Year (T.E.) Computer Engineering.
+          </p>
+          <div class="mt-8 text-right text-base md:text-lg">
+            <p><strong>Ms. Marina Thomas</strong> (Supervisor)</p>
+            <p><strong>Mrs. Silviya D' Monte</strong> (Head of Department)</p>
+            <p><strong>Dr. J.B. Patil</strong> (Principal)</p>
+          </div>
+        </div>
+
+        <!-- Slide 3: Acknowledgement -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Acknowledgement
+          </h1>
+          <p class="text-base md:text-lg mb-4">
+            We extend our sincere gratitude to:
+          </p>
+          <ul class="list-disc list-inside space-y-3 text-base md:text-lg ml-4">
+            <li>
+              <strong>Miss Thomas Marina</strong>, our guide, for her invaluable
+              guidance and encouragement.
+            </li>
+            <li>
+              The <strong>faculty and management</strong> of Universal College
+              of Engineering for their support.
+            </li>
+            <li>
+              The <strong>Student Council and SAASH</strong> for the successful
+              organization of the festival.
+            </li>
+            <li>
+              Our <strong>friends and classmates</strong> for their
+              participation and enthusiasm.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 4: Abstract -->
+        <div class="slide hidden p-8 md:p-12 flex flex-col justify-center">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Abstract
+          </h1>
+          <p class="text-lg md:text-xl leading-relaxed">
+            This report details the annual cultural and sports festival, Aurora
+            2025. Themed
+            <strong
+              >"Renaissance - Rekindling the Spirit of Growth, Art &
+              Resilience,"</strong
+            >
+            the festival was a vibrant platform for students to showcase their
+            talents.
+          </p>
+          <p class="text-lg md:text-xl mt-4 leading-relaxed">
+            The week-long event featured a wide array of sports, cultural
+            activities, and artistic pursuits, culminating in an award ceremony.
+            This report captures the essence, experiences, and achievements of
+            Aurora 2025.
+          </p>
+        </div>
+
+        <!-- Slide 5: Contents -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Contents
+          </h1>
+          <ol
+            class="list-decimal list-inside grid grid-cols-2 gap-x-8 gap-y-2 text-lg md:text-xl"
+          >
+            <li>Introduction</li>
+            <li>Theme: Renaissance</li>
+            <li>The Inauguration</li>
+            <li>Symbolic Traditions</li>
+            <li>Parade & Flash Mob</li>
+            <li>Sports Events</li>
+            <li>Cultural Events</li>
+            <li>Literary & Artistic Pursuits</li>
+            <li>Performing Arts</li>
+            <li>Fashion & Drama</li>
+            <li>Award Ceremony</li>
+            <li>Conclusion</li>
+          </ol>
+        </div>
+
+        <!-- Slide 6: Introduction to Aurora -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Introduction to Aurora
+          </h1>
+          <ul class="list-disc list-inside space-y-4 text-lg md:text-xl ml-4">
+            <li>
+              <strong>Aurora</strong> is the annual cultural and sports festival
+              of Universal College of Engineering.
+            </li>
+            <li>
+              It has evolved into the biggest annual event of the institution,
+              eagerly anticipated by all.
+            </li>
+            <li>
+              Organized by the
+              <strong>Student Council and SAASH</strong> (Students’ Association
+              of Applied Science and Humanities).
+            </li>
+            <li>
+              <strong>Aurora 2025 Theme:</strong> "Renaissance - Rekindling the
+              Spirit of Growth, Art & Resilience."
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 7: Theme -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-2">
+            Theme: Renaissance
+          </h1>
+          <h2 class="text-xl md:text-2xl mb-6 italic">
+            Rekindling the Spirit of Growth, Art & Resilience
+          </h2>
+          <ul class="list-disc list-inside space-y-4 text-lg md:text-xl ml-4">
+            <li>
+              Inspired by the historical European and Indian Renaissance
+              periods, signifying a "rebirth" of art, knowledge, and culture.
+            </li>
+            <li>
+              <strong>Guiding Principle:</strong> Ātmanam Viddhi - "Know
+              Yourself."
+            </li>
+            <li>
+              The theme was reflected in the rulebook, banners, and the
+              introduction of a new sports event:
+              <strong>Track and Field</strong>.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 8: Inauguration -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            The Inauguration: A Grand Beginning
+          </h1>
+          <ul class="list-disc list-inside space-y-4 text-lg md:text-xl ml-4">
+            <li>
+              The festival commenced with a <strong>Pooja</strong> of the ground
+              for an auspicious start.
+            </li>
+            <li>
+              Inaugural address by Campus Director,
+              <strong>Mr. J.D. Patil</strong>.
+            </li>
+            <li>
+              Motivational speeches by student leaders:
+              <ul class="list-['-_'] list-inside ml-6 mt-2 space-y-1">
+                <li><strong>Devansh</strong> (General Secretary)</li>
+                <li><strong>Aniket</strong> (Sports Secretary)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 9: Symbolic Traditions -->
+        <div class="slide hidden p-8 md:p-12 flex flex-col justify-center">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-8">
+            Symbolic Traditions
+          </h1>
+          <div class="space-y-6 text-lg md:text-xl">
+            <p>
+              <strong>Light Lamping Ceremony:</strong> The flame symbolized
+              wisdom, creativity, and the triumph of knowledge over ignorance.
+            </p>
+            <p>
+              <strong>Passing of the Torch:</strong> Seniors handed the Aurora
+              Torch to juniors, signifying the continuity of tradition,
+              responsibility, and leadership.
+            </p>
+          </div>
+        </div>
+
+        <!-- Slide 10: Parade & Flash Mob -->
+        <div class="slide hidden p-8 md:p-12 flex flex-col justify-center">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-8">
+            Parade & Flash Mob
+          </h1>
+          <div class="space-y-6 text-lg md:text-xl">
+            <p>
+              <strong>Grand Departmental Parade:</strong> A vibrant display of
+              unity and pride, with each department showcasing their spirit
+              through banners and chants.
+            </p>
+            <p>
+              <strong>Energetic Flash Mob:</strong> Students from all branches
+              came together for a lively performance, blending classical, folk,
+              and contemporary dance forms.
+            </p>
+          </div>
+        </div>
+
+        <!-- Slide 11: Sports Events: Igniting the Spirit -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Sports Events: Igniting the Spirit
+          </h1>
+          <ul class="list-disc list-inside space-y-3 text-lg md:text-xl ml-4">
+            <li>
+              <strong>Day 1:</strong> Kick-off matches for football, volleyball,
+              kabaddi, dodgeball, chess, and carrom.
+            </li>
+            <li>
+              <strong>Day 2:</strong> Introduction of new track and field events
+              (100m, 200m, relay) and the start of the cricket tournament.
+            </li>
+            <li>
+              <strong>Day 3:</strong> Cricket quarter-finals and semi-finals,
+              alongside indoor games like table tennis.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 12: Sports Events: The Finals -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Sports Events: The Finals
+          </h1>
+          <ul class="list-disc list-inside space-y-3 text-lg md:text-xl ml-4">
+            <li>
+              <strong>Day 4:</strong> High-stakes semi-final matches for
+              football, volleyball, and kabaddi. Throwball for girls was also a
+              highlight.
+            </li>
+            <li>
+              <strong>Final Day:</strong> Tense and thrilling final matches for
+              all major sports. The track and field finale had a significant
+              impact on the overall Shield rankings.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 13: Cultural Events -->
+        <div class="slide hidden p-8 md:p-12 flex justify-center items-center">
+          <div class="text-center">
+            <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-4">
+              Cultural Events
+            </h1>
+            <p class="text-xl md:text-3xl italic">A Mosaic of Creativity</p>
+            <p class="text-lg md:text-xl mt-6">
+              The cultural events were the soul of Aurora 2025, offering a
+              platform for students to express their artistic talents.
+            </p>
+          </div>
+        </div>
+
+        <!-- Slide 14: Day 5: Literary & Artistic Pursuits -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Day 5: Literary & Artistic Pursuits
+          </h1>
+          <ul class="list-disc list-inside space-y-4 text-lg md:text-xl ml-4">
+            <li>
+              <strong>Literary Events:</strong> Elocution, storytelling, and
+              debates showcased oratory skills.
+            </li>
+            <li>
+              <strong>Classroom Fun:</strong> Creative events like "Cooking
+              without Fire" and blog writing challenged students' innovation.
+              Mimicry events added a touch of humor.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 15: Day 6: Music & Dance Extravaganza -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Day 6: Music & Dance Extravaganza
+          </h1>
+          <ul class="list-disc list-inside space-y-3 text-lg md:text-xl ml-4">
+            <li>A spectacular display of rhythm, melody, and movement.</li>
+            <li>
+              <strong>Performances:</strong> Solo, duet, and group singing and
+              dancing competitions.
+            </li>
+            <li>
+              <strong>Cultural Tapestry:</strong> Performances ranged from
+              classical Indian dance to contemporary hip-hop and Bollywood.
+            </li>
+            <li>
+              <strong>Faculty Surprise:</strong> Memorable performances by
+              faculty members added a unique touch.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 16: Day 7: The Grand Finale -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Day 7: The Grand Finale
+          </h1>
+          <ul class="list-disc list-inside space-y-3 text-lg md:text-xl ml-4">
+            <li>
+              <strong>Fashion Show:</strong> Themed around Indian mythology
+              (Ramayana and Mahabharata).
+            </li>
+            <li>
+              <strong>Mr. & Ms. Aurora:</strong>
+              <ul class="list-['-_'] list-inside ml-6 mt-2 space-y-1">
+                <li><strong>Mr. Aurora:</strong> Kushan (IT Department)</li>
+                <li><strong>Ms. Aurora:</strong> Twisha Salde</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Trophy Distribution:</strong> Honoring outstanding
+              performers and teams.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 17: Award Ceremony & Closing -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Award Ceremony & Closing
+          </h1>
+          <ul class="list-disc list-inside space-y-3 text-lg md:text-xl ml-4">
+            <li>
+              The ceremony began with an address by the Campus Director,
+              <strong>Prof. J.D. Patil</strong>.
+            </li>
+            <li>Prizes were distributed for all sports and cultural events.</li>
+            <li>
+              <strong>Aurora Shield Winner:</strong> Computer Engineering
+              Department (SE A Division).
+            </li>
+            <li>
+              Speeches by the General Secretary and Sports Secretary, followed
+              by a vote of thanks.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 18: Conclusion -->
+        <div class="slide hidden p-8 md:p-12">
+          <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-6">
+            Conclusion: The Dawn of a New Era
+          </h1>
+          <ul class="list-disc list-inside space-y-3 text-lg md:text-xl ml-4">
+            <li>
+              Aurora 2025 successfully embodied its "Renaissance" theme,
+              fostering self-discovery, unity, and celebration.
+            </li>
+            <li>
+              The sports events highlighted teamwork and resilience, while the
+              cultural events showcased immense talent and creativity.
+            </li>
+            <li>
+              The festival's success was a testament to the collective effort of
+              students, faculty, and the organizing committees.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Slide 19: Grand Finale DJ Night -->
+        <div class="slide hidden p-8 md:p-12 flex justify-center items-center">
+          <div class="text-center">
+            <h1 class="slide-title text-3xl md:text-4xl text-[#A0522D] mb-4">
+              A Grand Finale: DJ Night
+            </h1>
+            <p class="text-lg md:text-xl leading-relaxed">
+              The festival concluded with an electrifying DJ night, where
+              students celebrated the culmination of an extraordinary week of
+              competition, creativity, and camaraderie. It was a perfect ending
+              to a memorable festival, leaving everyone with lasting memories of
+              joy and unity.
+            </p>
+          </div>
+        </div>
+
+        <!-- Slide 20: Thank You -->
+        <div
+          class="slide hidden p-8 md:p-12 flex flex-col justify-center items-center text-center"
+        >
+          <h1 class="slide-title text-5xl md:text-7xl text-[#A0522D]">
+            Thank You!
+          </h1>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="w-full max-w-5xl mt-4 flex justify-between items-center px-2">
+      <span class="brand-title text-lg text-[#A0522D]">Aurora 2025</span>
+      <div class="flex items-center gap-4">
+        <button
+          id="prev-btn"
+          class="nav-button bg-[#C4A484] text-white rounded-full p-3 shadow-md"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <div id="slide-counter" class="text-lg font-semibold w-12 text-center">
+          1 / 20
+        </div>
+        <button
+          id="next-btn"
+          class="nav-button bg-[#C4A484] text-white rounded-full p-3 shadow-md"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const slides = document.querySelectorAll(".slide");
+      const prevBtn = document.getElementById("prev-btn");
+      const nextBtn = document.getElementById("next-btn");
+      const slideCounter = document.getElementById("slide-counter");
+
+      let currentSlide = 0;
+      const totalSlides = slides.length;
+
+      function showSlide(index) {
+        // Hide all slides
+        slides.forEach((slide, i) => {
+          slide.classList.remove("visible");
+          slide.classList.add("hidden");
+        });
+
+        // Show the target slide
+        if (slides[index]) {
+          slides[index].classList.remove("hidden");
+          slides[index].classList.add("visible");
+        }
+
+        // Update slide counter
+        slideCounter.textContent = `${index + 1} / ${totalSlides}`;
+
+        // Update button states
+        prevBtn.disabled = index === 0;
+        nextBtn.disabled = index === totalSlides - 1;
+      }
+
+      function nextSlide() {
+        if (currentSlide < totalSlides - 1) {
+          currentSlide++;
+          showSlide(currentSlide);
+        }
+      }
+
+      function prevSlide() {
+        if (currentSlide > 0) {
+          currentSlide--;
+          showSlide(currentSlide);
+        }
+      }
+
+      // Event Listeners
+      nextBtn.addEventListener("click", nextSlide);
+      prevBtn.addEventListener("click", prevSlide);
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") {
+          nextSlide();
+        } else if (e.key === "ArrowLeft") {
+          prevSlide();
+        }
+      });
+
+      // Initial setup
+      showSlide(currentSlide);
+    </script>
+  </body>
+</html>
