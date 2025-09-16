@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/UserRoutes.js";
+import SkillRoutes from "./routes/SkillRoutes.js";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.get("/", (req, res) => {
 
 // Auth Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/skill", SkillRoutes);
 
 // MongoDB Connection & Server Start
 const PORT = process.env.PORT || 5000;
