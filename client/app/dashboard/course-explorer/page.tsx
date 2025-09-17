@@ -1542,18 +1542,7 @@ export default function CourseExplorerPage() {
     setLoading(true);
     setError(null);
 
-    const result = await fetchCoursesWithAI(
-      searchTerm,
-      selectedPlatform,
-      selectedLevel,
-      sortBy
-    );
-
-    if (result.success) {
-      setCourses(result.courses);
-    } else {
-      setError(result.error);
-    }
+    await fetchCoursesWithAI();
 
     setLoading(false);
   }, [searchTerm, selectedLevel, selectedPlatform, sortBy]);
@@ -1698,10 +1687,9 @@ export default function CourseExplorerPage() {
                 <p className="text-sm text-blue-700">
                   Recommendations based on: Skills: Skills:{" "}
                   {formData.skills.join(", ")}
-                  <p>
-                    Goals:{" "}
-                    {(formData?.careerGoals || []).slice(0, 2).join(", ")}
-                  </p>
+                </p>
+                <p className="text-sm text-blue-700">
+                  Goals: {(formData?.careerGoals || []).slice(0, 2).join(", ")}
                 </p>
               </div>
               <div className="flex items-center gap-4">

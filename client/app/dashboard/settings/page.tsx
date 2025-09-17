@@ -1,19 +1,71 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Settings, Bell, Shield, Palette } from "lucide-react"
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, Bell, Shield, Palette } from "lucide-react";
 
 export default function SettingsPage() {
+  const [darkMode, setDarkMode] = useState(false);
+  const [compactMode, setCompactMode] = useState(false);
+
+  // Load saved theme on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      setDarkMode(true);
+      document.documentElement.classList.add("dark");
+    }
+    const savedCompact = localStorage.getItem("compactMode");
+    if (savedCompact === "true") {
+      setCompactMode(true);
+      document.documentElement.classList.add("compact");
+    }
+  }, []);
+
+  // Toggle dark mode
+  const toggleDarkMode = (checked: boolean) => {
+    setDarkMode(checked);
+    if (checked) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  };
+
+  // Toggle compact mode
+  const toggleCompactMode = (checked: boolean) => {
+    setCompactMode(checked);
+    if (checked) {
+      document.documentElement.classList.add("compact");
+      localStorage.setItem("compactMode", "true");
+    } else {
+      document.documentElement.classList.remove("compact");
+      localStorage.setItem("compactMode", "false");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">Manage your account settings and preferences</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Settings
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300">
+          Manage your account settings and preferences
+        </p>
       </div>
 
       <Tabs defaultValue="general" className="space-y-4">
@@ -24,6 +76,7 @@ export default function SettingsPage() {
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
         </TabsList>
 
+        {/* General */}
         <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
@@ -46,13 +99,20 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue="john.doe@example.com" />
+                <Input
+                  id="email"
+                  type="email"
+                  defaultValue="john.doe@example.com"
+                />
               </div>
-              <Button className="bg-[#6C63FF] hover:bg-[#5B54E6] text-white">Save Changes</Button>
+              <Button className="bg-[#6C63FF] hover:bg-[#5B54E6] text-white">
+                Save Changes
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Notifications */}
         <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>
@@ -60,27 +120,35 @@ export default function SettingsPage() {
                 <Bell className="h-5 w-5 text-[#6C63FF]" />
                 Notification Preferences
               </CardTitle>
-              <CardDescription>Choose what notifications you want to receive</CardDescription>
+              <CardDescription>
+                Choose what notifications you want to receive
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Email Notifications</Label>
-                  <p className="text-sm text-gray-600">Receive updates via email</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Receive updates via email
+                  </p>
                 </div>
                 <Switch defaultChecked />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Course Recommendations</Label>
-                  <p className="text-sm text-gray-600">Get AI-powered course suggestions</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Get AI-powered course suggestions
+                  </p>
                 </div>
                 <Switch defaultChecked />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Career Updates</Label>
-                  <p className="text-sm text-gray-600">Weekly career progress reports</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Weekly career progress reports
+                  </p>
                 </div>
                 <Switch />
               </div>
@@ -88,6 +156,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
+        {/* Privacy */}
         <TabsContent value="privacy" className="space-y-4">
           <Card>
             <CardHeader>
@@ -95,20 +164,26 @@ export default function SettingsPage() {
                 <Shield className="h-5 w-5 text-[#6C63FF]" />
                 Privacy & Security
               </CardTitle>
-              <CardDescription>Manage your privacy and security settings</CardDescription>
+              <CardDescription>
+                Manage your privacy and security settings
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Profile Visibility</Label>
-                  <p className="text-sm text-gray-600">Make your profile visible to recruiters</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Make your profile visible to recruiters
+                  </p>
                 </div>
                 <Switch defaultChecked />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Data Analytics</Label>
-                  <p className="text-sm text-gray-600">Allow anonymous usage analytics</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Allow anonymous usage analytics
+                  </p>
                 </div>
                 <Switch defaultChecked />
               </div>
@@ -117,6 +192,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
+        {/* Appearance */}
         <TabsContent value="appearance" className="space-y-4">
           <Card>
             <CardHeader>
@@ -124,27 +200,39 @@ export default function SettingsPage() {
                 <Palette className="h-5 w-5 text-[#6C63FF]" />
                 Appearance
               </CardTitle>
-              <CardDescription>Customize how the app looks and feels</CardDescription>
+              <CardDescription>
+                Customize how the app looks and feels
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Dark Mode */}
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Dark Mode</Label>
-                  <p className="text-sm text-gray-600">Switch to dark theme</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Switch to dark theme
+                  </p>
                 </div>
-                <Switch />
+                <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
               </div>
+
+              {/* Compact Mode */}
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Compact Mode</Label>
-                  <p className="text-sm text-gray-600">Use compact layout</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Use compact layout
+                  </p>
                 </div>
-                <Switch />
+                <Switch
+                  checked={compactMode}
+                  onCheckedChange={toggleCompactMode}
+                />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
