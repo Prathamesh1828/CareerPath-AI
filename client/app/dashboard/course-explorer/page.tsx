@@ -1804,14 +1804,6 @@ export default function CourseExplorerPage() {
                     <SelectItem value="projects">Most Projects</SelectItem>
                   </SelectContent>
                 </Select>
-
-                <Button
-                  variant="outline"
-                  className="h-12 border-2 border-dashed hover:border-solid transition-all"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  More Filters
-                </Button>
               </div>
             </div>
 
