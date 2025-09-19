@@ -44,7 +44,7 @@ Please analyze this profile thoroughly and provide a detailed career analysis in
       "description": "Detailed explanation of why this career fits their profile, including specific connections to their skills and interests",
       "requiredSkills": ["skill1", "skill2", "skill3", "skill4"],
       "growthOutlook": "Specific industry growth data and future prospects",
-      "salaryRange": "Realistic salary range based on location and experience level",
+      "salaryRange": "Realistic salary range based on location and experience level in INR",
       "nextSteps": ["actionable step 1", "actionable step 2", "actionable step 3", "actionable step 4"]
     }
   ],
