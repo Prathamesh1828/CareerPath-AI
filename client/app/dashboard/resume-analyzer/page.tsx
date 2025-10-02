@@ -96,15 +96,22 @@ export default function ResumeAnalyzerPage() {
           body: formData,
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-          throw new Error("Failed to analyze resume");
+          throw new Error(
+            data.error || data.hint || "Failed to analyze resume"
+          );
         }
 
-        const data = await response.json();
         setAnalysisData(data);
       } catch (err) {
         console.error("Error:", err);
-        setError("Failed to analyze resume. Please try again.");
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to analyze resume. Please try again.";
+        setError(errorMessage);
       } finally {
         setIsAnalyzing(false);
       }
