@@ -21,6 +21,7 @@ import {
   LogOut,
   Map,
   Settings,
+  Users,
   User,
   HelpCircle,
 } from "lucide-react";
@@ -59,6 +60,11 @@ const menuItems = [
     title: "Insights & Analytics",
     url: "/dashboard/insights",
     icon: BarChart3,
+  },
+  {
+    title: "Counselor Chat",
+    url: "/dashboard/counselor",
+    icon: Users,
   },
   {
     title: "Profile & Skills",
