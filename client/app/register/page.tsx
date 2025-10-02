@@ -83,7 +83,7 @@ export default function RegisterPage() {
           description: "Welcome to Career-Path AI!",
         });
 
-        router.push("/dashboard"); // Navigate after successful registration
+        router.push("/login"); // Navigate after successful registration
       } else {
         toast({
           title: "Unexpected Error",

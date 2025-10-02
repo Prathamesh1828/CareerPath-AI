@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   BarChart3,
   BookOpen,
@@ -23,10 +25,13 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function DashboardPage() {
   const [isVisible, setIsVisible] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
+
   const [animatedValues, setAnimatedValues] = useState({
     resumeScore: 0,
     skillsMatched: 0,
@@ -34,7 +39,82 @@ export default function DashboardPage() {
     careerProgress: 0,
   });
 
-  // Fetch Logged-in User Profile
+  // Counselor form
+  const [showCounselorForm, setShowCounselorForm] = useState(false);
+  const [counselorForm, setCounselorForm] = useState({
+    name: "",
+    advisor: "",
+    field: "",
+    bio: "",
+    experience: "",
+    email: "",
+  });
+
+  // Review form
+  const [reviewForm, setReviewForm] = useState({
+    name: "",
+    position: "",
+    review: "",
+  });
+  const [reviews, setReviews] = useState<
+    { name: string; position: string; review: string }[]
+  >([]);
+
+  // Review submit handler
+  const handleReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewForm.name || !reviewForm.position || !reviewForm.review) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setReviews([...reviews, reviewForm]);
+    setReviewForm({ name: "", position: "", review: "" });
+    toast({
+      title: "Review Submitted",
+      description: "Thank you for sharing your feedback!",
+    });
+  };
+
+  // Counselor submit handler
+  const handleCounselorSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !counselorForm.name ||
+      !counselorForm.advisor ||
+      !counselorForm.field ||
+      !counselorForm.bio ||
+      !counselorForm.experience ||
+      !counselorForm.email
+    ) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Counselor Request Submitted",
+      description: `Thanks ${counselorForm.name}, we’ll review your request!`,
+    });
+
+    setCounselorForm({
+      name: "",
+      advisor: "",
+      field: "",
+      bio: "",
+      experience: "",
+      email: "",
+    });
+    setShowCounselorForm(false);
+  };
+
+  // Fetch user
   const fetchUserDetails = async () => {
     const token = localStorage.getItem("token");
 
@@ -100,7 +180,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30">
       <div className="space-y-4 sm:space-y-6 lg:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-        {/* Welcome Section - Enhanced Mobile Layout */}
+        {/* Welcome */}
         <div
           className={`gradient-animation rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white hover-lift shadow-lg ${
             isVisible ? "animate-fadeInUp" : "opacity-0"
@@ -112,8 +192,8 @@ export default function DashboardPage() {
                 Welcome back, {user ? user.name : "..."}! 🚀
               </h1>
               <p className="text-purple-100 text-sm sm:text-base lg:text-lg leading-relaxed max-w-2xl">
-                Ready to take the next step in your career journey? Let's see
-                what's new today and discover exciting opportunities.
+                Ready to take the next step in your career journey? Let’s see
+                what’s new today and discover exciting opportunities.
               </p>
             </div>
             <div className="hidden sm:flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg p-2 lg:p-3">
@@ -123,7 +203,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Stats - Enhanced Responsive Grid */}
+        {/* Quick Stats */}
         <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {[
             {
@@ -133,7 +213,6 @@ export default function DashboardPage() {
               icon: FileText,
               color: "text-[#6C63FF]",
               bgColor: "bg-purple-50",
-              gradientColor: "from-purple-500 to-indigo-600",
               trend: "up",
             },
             {
@@ -143,7 +222,6 @@ export default function DashboardPage() {
               icon: Target,
               color: "text-green-600",
               bgColor: "bg-green-50",
-              gradientColor: "from-green-500 to-emerald-600",
               trend: "up",
             },
             {
@@ -153,7 +231,6 @@ export default function DashboardPage() {
               icon: BookOpen,
               color: "text-blue-600",
               bgColor: "bg-blue-50",
-              gradientColor: "from-blue-500 to-cyan-600",
               trend: "neutral",
             },
             {
@@ -163,7 +240,6 @@ export default function DashboardPage() {
               icon: Map,
               color: "text-orange-600",
               bgColor: "bg-orange-50",
-              gradientColor: "from-orange-500 to-red-600",
               trend: "up",
             },
           ].map((stat, index) => (
@@ -233,287 +309,277 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Recent Activity & AI Recommendations - Enhanced Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-          {/* Recent Activity Card */}
-          <Card
-            className={`hover-lift shadow-md border-0 ${
-              isVisible ? "animate-slideInLeft" : "opacity-0"
-            }`}
-            style={{ animationDelay: "0.4s" }}
-          >
-            <CardHeader className="p-4 sm:p-6 lg:p-7 pb-3 sm:pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="p-2 sm:p-2.5 bg-[#6C63FF]/10 rounded-lg">
-                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-[#6C63FF]" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold">
-                      Recent Activity
-                    </CardTitle>
-                    <CardDescription className="text-xs sm:text-sm text-gray-600 mt-0.5">
-                      Your latest career development activities
-                    </CardDescription>
-                  </div>
-                </div>
-                <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 lg:p-7 pt-0">
-              {[
-                {
-                  activity: "Resume analyzed",
-                  description: "ATS compatibility improved",
-                  time: "2 hours ago",
-                  badge: "+5 points",
-                  color: "bg-[#6C63FF]",
-                  icon: FileText,
-                },
-                {
-                  activity: "Completed React Fundamentals",
-                  description: "Certificate earned",
-                  time: "1 day ago",
-                  badge: "Certificate",
-                  color: "bg-green-600",
-                  icon: Award,
-                },
-                {
-                  activity: "Updated career roadmap",
-                  description: "3 new milestones added",
-                  time: "3 days ago",
-                  badge: "Progress",
-                  color: "bg-blue-600",
-                  icon: Map,
-                },
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="group flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl hover:bg-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer"
-                >
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`w-8 h-8 sm:w-10 sm:h-10 ${item.color} rounded-lg flex items-center justify-center`}
-                    >
-                      <item.icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
-                          {item.activity}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-600 truncate">
-                          {item.description}
-                        </p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Clock className="h-3 w-3 text-gray-400" />
-                          <p className="text-xs text-gray-500">{item.time}</p>
-                        </div>
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className="animate-pulse-custom text-xs whitespace-nowrap bg-white border border-gray-200 group-hover:border-gray-300"
-                      >
-                        {item.badge}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* AI Recommendations Card */}
-          <Card
-            className={`hover-lift shadow-md border-0 ${
-              isVisible ? "animate-slideInRight" : "opacity-0"
-            }`}
-            style={{ animationDelay: "0.6s" }}
-          >
-            <CardHeader className="p-4 sm:p-6 lg:p-7 pb-3 sm:pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="p-2 sm:p-2.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-                    <Zap className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
-                      AI Recommendations
-                      <Sparkles className="h-4 w-4 text-yellow-500" />
-                    </CardTitle>
-                    <CardDescription className="text-xs sm:text-sm text-gray-600 mt-0.5">
-                      Personalized suggestions for your career growth
-                    </CardDescription>
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-full px-2 py-1">
-                  <span className="text-xs font-medium text-purple-700">
-                    AI
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 lg:p-7 pt-0">
-              {[
-                {
-                  type: "Skill Gap Alert",
-                  message:
-                    "Consider learning TypeScript to match 90% of Frontend Developer job requirements",
-                  bgColor: "bg-gradient-to-r from-purple-50 to-purple-100",
-                  borderColor: "border-purple-200",
-                  textColor: "text-purple-900",
-                  subTextColor: "text-purple-700",
-                  icon: Target,
-                  priority: "High",
-                },
-                {
-                  type: "Course Recommendation",
-                  message:
-                    '"Advanced React Patterns" course aligns with your career goals',
-                  bgColor: "bg-gradient-to-r from-blue-50 to-blue-100",
-                  borderColor: "border-blue-200",
-                  textColor: "text-blue-900",
-                  subTextColor: "text-blue-700",
-                  icon: BookOpen,
-                  priority: "Medium",
-                },
-                {
-                  type: "Resume Tip",
-                  message:
-                    "Add more quantifiable achievements to boost your ATS score",
-                  bgColor: "bg-gradient-to-r from-green-50 to-green-100",
-                  borderColor: "border-green-200",
-                  textColor: "text-green-900",
-                  subTextColor: "text-green-700",
-                  icon: FileText,
-                  priority: "Low",
-                },
-              ].map((rec, index) => (
-                <div
-                  key={index}
-                  className={`group p-3 sm:p-4 ${rec.bgColor} rounded-lg sm:rounded-xl border ${rec.borderColor} hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer`}
-                >
-                  <div className="flex items-start gap-2 sm:gap-3">
-                    <div
-                      className={`p-1.5 sm:p-2 ${rec.bgColor} rounded-lg border ${rec.borderColor}`}
-                    >
-                      <rec.icon
-                        className={`h-3 w-3 sm:h-4 sm:w-4 ${rec.textColor}`}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <p
-                          className={`text-xs sm:text-sm font-semibold ${rec.textColor}`}
-                        >
-                          {rec.type}
-                        </p>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs px-1.5 py-0.5 ${
-                            rec.priority === "High"
-                              ? "border-red-300 text-red-700"
-                              : rec.priority === "Medium"
-                              ? "border-yellow-300 text-yellow-700"
-                              : "border-green-300 text-green-700"
-                          }`}
-                        >
-                          {rec.priority}
-                        </Badge>
-                      </div>
-                      <p
-                        className={`text-xs sm:text-sm ${rec.subTextColor} line-clamp-3 leading-relaxed`}
-                      >
-                        {rec.message}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Performance Insights - New Section */}
+        {/* AI Recommendations Card */}
         <Card
           className={`hover-lift shadow-md border-0 ${
-            isVisible ? "animate-fadeInUp" : "opacity-0"
+            isVisible ? "animate-slideInRight" : "opacity-0"
           }`}
-          style={{ animationDelay: "0.8s" }}
+          style={{ animationDelay: "0.6s" }}
         >
-          <CardHeader className="p-4 sm:p-6 lg:p-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-              <div>
-                <CardTitle className="text-lg sm:text-xl lg:text-2xl font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
-                  Performance Insights
-                </CardTitle>
-                <CardDescription className="text-sm sm:text-base text-gray-600 mt-1">
-                  Your career development metrics at a glance
-                </CardDescription>
+          <CardHeader className="p-4 sm:p-6 lg:p-7 pb-3 sm:pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-2.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                  <Zap className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+                    AI Recommendations
+                    <Sparkles className="h-4 w-4 text-yellow-500" />
+                  </CardTitle>
+                  <CardDescription className="text-xs sm:text-sm text-gray-600 mt-0.5">
+                    Personalized suggestions for your career growth
+                  </CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>Live data</span>
+              <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-full px-2 py-1">
+                <span className="text-xs font-medium text-purple-700">AI</span>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 lg:p-8 pt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {[
-                {
-                  metric: "Profile Views",
-                  value: "247",
-                  change: "+12%",
-                  period: "This week",
-                  color: "text-blue-600",
-                },
-                {
-                  metric: "Applications Sent",
-                  value: "23",
-                  change: "+8%",
-                  period: "This month",
-                  color: "text-purple-600",
-                },
-                {
-                  metric: "Interview Invites",
-                  value: "5",
-                  change: "+25%",
-                  period: "Last 30 days",
-                  color: "text-green-600",
-                },
-                {
-                  metric: "Learning Streak",
-                  value: "15 days",
-                  change: "Current",
-                  period: "Best: 28 days",
-                  color: "text-orange-600",
-                },
-              ].map((insight, index) => (
-                <div
-                  key={index}
-                  className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-colors duration-200"
-                >
+          <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 lg:p-7 pt-0">
+            {[
+              {
+                type: "Skill Gap Alert",
+                message:
+                  "Consider learning TypeScript to match 90% of Frontend Developer job requirements",
+                bgColor: "bg-gradient-to-r from-purple-50 to-purple-100",
+                borderColor: "border-purple-200",
+                textColor: "text-purple-900",
+                subTextColor: "text-purple-700",
+                icon: Target,
+                priority: "High",
+              },
+              {
+                type: "Course Recommendation",
+                message:
+                  '"Advanced React Patterns" course aligns with your career goals',
+                bgColor: "bg-gradient-to-r from-blue-50 to-blue-100",
+                borderColor: "border-blue-200",
+                textColor: "text-blue-900",
+                subTextColor: "text-blue-700",
+                icon: BookOpen,
+                priority: "Medium",
+              },
+              {
+                type: "Resume Tip",
+                message:
+                  "Add more quantifiable achievements to boost your ATS score",
+                bgColor: "bg-gradient-to-r from-green-50 to-green-100",
+                borderColor: "border-green-200",
+                textColor: "text-green-900",
+                subTextColor: "text-green-700",
+                icon: FileText,
+                priority: "Low",
+              },
+            ].map((rec, index) => (
+              <div
+                key={index}
+                className={`group p-3 sm:p-4 ${rec.bgColor} rounded-lg sm:rounded-xl border ${rec.borderColor} hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer`}
+              >
+                <div className="flex items-start gap-2 sm:gap-3">
                   <div
-                    className={`text-xl sm:text-2xl lg:text-3xl font-bold ${insight.color} mb-1`}
+                    className={`p-1.5 sm:p-2 ${rec.bgColor} rounded-lg border ${rec.borderColor}`}
                   >
-                    {insight.value}
+                    <rec.icon
+                      className={`h-3 w-3 sm:h-4 sm:w-4 ${rec.textColor}`}
+                    />
                   </div>
-                  <div className="text-xs sm:text-sm font-medium text-gray-900 mb-1">
-                    {insight.metric}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p
+                        className={`text-xs sm:text-sm font-semibold ${rec.textColor}`}
+                      >
+                        {rec.type}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs px-1.5 py-0.5 ${
+                          rec.priority === "High"
+                            ? "border-red-300 text-red-700"
+                            : rec.priority === "Medium"
+                            ? "border-yellow-300 text-yellow-700"
+                            : "border-green-300 text-green-700"
+                        }`}
+                      >
+                        {rec.priority}
+                      </Badge>
+                    </div>
+                    <p
+                      className={`text-xs sm:text-sm ${rec.subTextColor} line-clamp-3 leading-relaxed`}
+                    >
+                      {rec.message}
+                    </p>
                   </div>
-                  <div className="text-xs text-green-600 font-medium mb-1">
-                    {insight.change}
-                  </div>
-                  <div className="text-xs text-gray-500">{insight.period}</div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
+
+      {/* Reviews Section */}
+      <Card className="hover:shadow-xl transition-shadow duration-300 border-0 rounded-xl overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 sm:p-6">
+          <CardTitle className="text-xl sm:text-2xl font-bold">
+            Submit a Review
+          </CardTitle>
+          <CardDescription className="text-gray-600 mt-1 sm:mt-2">
+            Share your experience with others 🚀
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 space-y-6">
+          <form
+            onSubmit={handleReviewSubmit}
+            className="space-y-3 sm:space-y-4"
+          >
+            <Input
+              placeholder="Your Name"
+              value={reviewForm.name}
+              onChange={(e) =>
+                setReviewForm({ ...reviewForm, name: e.target.value })
+              }
+              className="focus:ring-2 focus:ring-cyan-300"
+            />
+            <Input
+              placeholder="Your Position (e.g., Software Engineer at Google)"
+              value={reviewForm.position}
+              onChange={(e) =>
+                setReviewForm({ ...reviewForm, position: e.target.value })
+              }
+              className="focus:ring-2 focus:ring-cyan-300"
+            />
+            <Textarea
+              placeholder="Write your review..."
+              value={reviewForm.review}
+              onChange={(e) =>
+                setReviewForm({ ...reviewForm, review: e.target.value })
+              }
+              className="focus:ring-2 focus:ring-cyan-300 resize-none"
+            />
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
+            >
+              Submit Review
+            </Button>
+          </form>
+
+          <div className="mt-6 space-y-4">
+            <h3 className="font-semibold text-lg sm:text-xl">
+              What others say:
+            </h3>
+            {reviews.length === 0 && (
+              <p className="text-gray-500 text-sm sm:text-base">
+                No reviews yet. Be the first!
+              </p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {reviews.map((r, i) => (
+                <div
+                  key={i}
+                  className="p-4 border rounded-xl bg-gray-50 shadow-sm hover:shadow-md transition-shadow duration-300"
+                >
+                  <p className="font-medium text-gray-800">{r.name}</p>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    {r.position}
+                  </p>
+                  <p className="text-gray-800 mt-2 sm:mt-3">{r.review}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Counselor Section */}
+      <Card className="hover:shadow-xl transition-shadow duration-300 border-0 rounded-xl overflow-hidden mt-6 sm:mt-8">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6">
+          <CardTitle className="text-xl sm:text-2xl font-bold">
+            Want to be a Counselor?
+          </CardTitle>
+          <CardDescription className="text-gray-600 mt-1 sm:mt-2">
+            Help others by guiding them in their career journey 🌟
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 space-y-6">
+          {!showCounselorForm ? (
+            <Button
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+              onClick={() => setShowCounselorForm(true)}
+            >
+              Click Me
+            </Button>
+          ) : (
+            <form
+              onSubmit={handleCounselorSubmit}
+              className="space-y-3 sm:space-y-4"
+            >
+              <Input
+                placeholder="Your Name"
+                value={counselorForm.name}
+                onChange={(e) =>
+                  setCounselorForm({ ...counselorForm, name: e.target.value })
+                }
+                className="focus:ring-2 focus:ring-emerald-300"
+              />
+              <Input
+                placeholder="Advisor"
+                value={counselorForm.advisor}
+                onChange={(e) =>
+                  setCounselorForm({
+                    ...counselorForm,
+                    advisor: e.target.value,
+                  })
+                }
+                className="focus:ring-2 focus:ring-emerald-300"
+              />
+              <Input
+                placeholder="Field (e.g., AI, Web Development)"
+                value={counselorForm.field}
+                onChange={(e) =>
+                  setCounselorForm({ ...counselorForm, field: e.target.value })
+                }
+                className="focus:ring-2 focus:ring-emerald-300"
+              />
+              <Textarea
+                placeholder="Short Bio"
+                value={counselorForm.bio}
+                onChange={(e) =>
+                  setCounselorForm({ ...counselorForm, bio: e.target.value })
+                }
+                className="focus:ring-2 focus:ring-emerald-300 resize-none"
+              />
+              <Input
+                placeholder="Experience (e.g., 5 years)"
+                value={counselorForm.experience}
+                onChange={(e) =>
+                  setCounselorForm({
+                    ...counselorForm,
+                    experience: e.target.value,
+                  })
+                }
+                className="focus:ring-2 focus:ring-emerald-300"
+              />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={counselorForm.email}
+                onChange={(e) =>
+                  setCounselorForm({ ...counselorForm, email: e.target.value })
+                }
+                className="focus:ring-2 focus:ring-emerald-300"
+              />
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+              >
+                Submit Request
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

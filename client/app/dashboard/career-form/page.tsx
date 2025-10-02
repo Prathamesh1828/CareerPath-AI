@@ -47,7 +47,7 @@ export default function CareerPathForm() {
 
     try {
       console.log("Submitting form data to Gemini AI:", formData);
-      
+
       const response = await fetch("/api/career-recommendations", {
         method: "POST",
         headers: {
@@ -61,25 +61,27 @@ export default function CareerPathForm() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Response error:", errorData);
-        throw new Error(`HTTP ${response.status}: ${errorData.error || 'Unknown error'}`);
+        throw new Error(
+          `HTTP ${response.status}: ${errorData.error || "Unknown error"}`
+        );
       }
 
       const data = await response.json();
       console.log("Received AI recommendations:", data);
-      
+
       // Store recommendations in localStorage
       localStorage.setItem("careerRecommendations", JSON.stringify(data));
-      
+
       toast({
         title: "AI Analysis Complete! 🎉",
-        description: "Your personalized career recommendations are ready. Powered by Gemini AI.",
+        description:
+          "Your personalized career recommendations are ready. Powered by Gemini AI.",
       });
 
       // Redirect to results page after a short delay
       setTimeout(() => {
         router.push("/dashboard/recommendations");
       }, 1500);
-
     } catch (error) {
       console.error("Detailed error:", error);
       toast({
