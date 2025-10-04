@@ -28,6 +28,7 @@ import {
   Award,
   CheckCircle2,
   PlayCircle,
+  Quote,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
@@ -977,28 +978,27 @@ export default function DashboardPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {reviews.map((r, i) => (
-                      <div
-                        key={r._id || i}
-                        className="p-5 border-2 rounded-xl bg-white hover:shadow-lg transition-all"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <p className="font-semibold text-gray-900">
-                              {r.name}
-                            </p>
-                            <p className="text-sm text-blue-600 font-medium">
-                              {r.position}
-                            </p>
+                      <div key={r._id || i} className="relative rounded-2xl p-[1px] bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 hover:shadow-[0_10px_30px_rgba(147,51,234,0.25)] transition-all">
+                        <div className="rounded-2xl bg-white/95 backdrop-blur-sm p-5">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {r.name}
+                              </p>
+                              <p className="text-sm text-blue-600 font-medium">
+                                {r.position}
+                              </p>
+                            </div>
+                            {r.createdAt && (
+                              <Badge variant="secondary" className="text-xs">
+                                {formatDate(r.createdAt)}
+                              </Badge>
+                            )}
                           </div>
-                          {r.createdAt && (
-                            <Badge variant="secondary" className="text-xs">
-                              {formatDate(r.createdAt)}
-                            </Badge>
-                          )}
+                          <p className="text-gray-800 leading-relaxed">
+                            "{r.review}"
+                          </p>
                         </div>
-                        <p className="text-gray-700 leading-relaxed">
-                          "{r.review}"
-                        </p>
                       </div>
                     ))}
                   </div>

@@ -8741,9 +8741,7 @@ export default function CourseExplorerPage() {
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [sortBy, setSortBy] = useState("ai-recommended");
-  const [bookmarkedCourses, setBookmarkedCourses] = useState(
-    new Set([2, 5, 12, 19, 26, 35, 38, 39])
-  );
+  const [bookmarkedCourses, setBookmarkedCourses] = useState(new Set());
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState("grid"); // grid or list
   const [showFilters, setShowFilters] = useState(false);
@@ -8788,6 +8786,24 @@ export default function CourseExplorerPage() {
   }, [formData]); // Only depend on formData since filtering is now done in render
 
   const [skills, setSkills] = useState([]);
+
+  // Load bookmarks from localStorage on mount
+  useEffect(() => {
+    const savedBookmarks = localStorage.getItem("courseBookmarks");
+    if (savedBookmarks) {
+      try {
+        const bookmarksArray = JSON.parse(savedBookmarks);
+        setBookmarkedCourses(new Set(bookmarksArray));
+      } catch (error) {
+        console.error("Error loading bookmarks:", error);
+        // Set default bookmarks if parsing fails
+        setBookmarkedCourses(new Set([2, 5, 12, 19, 26, 35, 38, 39]));
+      }
+    } else {
+      // Set default bookmarks for first-time users
+      setBookmarkedCourses(new Set([2, 5, 12, 19, 26, 35, 38, 39]));
+    }
+  }, []);
 
   // Fix the fetchSkills function - line where you set formData
   useEffect(() => {
@@ -8875,6 +8891,14 @@ export default function CourseExplorerPage() {
       } else {
         newBookmarks.add(courseId);
       }
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem("courseBookmarks", JSON.stringify(Array.from(newBookmarks)));
+      } catch (error) {
+        console.error("Error saving bookmarks:", error);
+      }
+      
       return newBookmarks;
     });
   };
