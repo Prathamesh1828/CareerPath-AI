@@ -30,28 +30,19 @@ import {
   Save,
   Camera,
   LogOut,
-  Star,
-  Award,
   Target,
   BookOpen,
   Brain,
-  Zap,
   CheckCircle,
   ExternalLink,
   Download,
   RefreshCw,
   Settings,
-  Shield,
-  Bell,
   Eye,
-  EyeOff,
-  Lock,
-  Sparkles,
-  TrendingUp,
   ArrowRight,
   Copy,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Select,
   SelectTrigger,
@@ -64,40 +55,27 @@ import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 
 const mockUserData = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  phone: "+1 (555) 123-4567",
-  location: "San Francisco, CA",
-  linkedin: "linkedin.com/in/johndoe",
-  github: "github.com/johndoe",
-  bio: "Passionate frontend developer with 3+ years of experience building modern web applications. Love working with React, TypeScript, and creating user-friendly interfaces.",
-  skills: [],
   resumeHistory: [
     {
       id: 1,
-      name: "John_Doe_Resume_v3.pdf",
+      name: "Resume_v3.pdf",
       uploadDate: "2024-01-15",
       score: 85,
       size: "245 KB",
     },
     {
       id: 2,
-      name: "John_Doe_Resume_v2.pdf",
+      name: "Resume_v2.pdf",
       uploadDate: "2023-12-10",
       score: 78,
       size: "232 KB",
-    },
-    {
-      id: 3,
-      name: "John_Doe_Resume_v1.pdf",
-      uploadDate: "2023-11-05",
-      score: 72,
-      size: "198 KB",
     },
   ],
 };
 
 export default function ProfilePage() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -130,8 +108,176 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [profileCompleteness, setProfileCompleteness] = useState(0);
   const [user, setUser] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  // NEW: Preferences states
+  const [savedPreferences, setSavedPreferences] = useState(null);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
+  const [isDeletingPreferences, setIsDeletingPreferences] = useState(false);
 
   const router = useRouter();
+
+  // Fetch user details from API
+  const fetchUserDetails = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast({
+        title: "Unauthorized",
+        description: "No token found. Please log in again.",
+        variant: "destructive",
+      });
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setIsLoadingProfile(true);
+      const res = await fetch(`${API_URL}/auth/me`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast({
+          title: "Failed to Fetch User",
+          description: data.message || "Unable to fetch user details.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setUser(data.user);
+
+      // Update profileData with fetched user info
+      setProfileData((prev) => ({
+        ...prev,
+        name: data.user.name || prev.name,
+        email: data.user.email || prev.email,
+      }));
+
+      console.log("✅ User fetched:", data.user);
+    } catch (error) {
+      console.error("Fetch User Error:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong while fetching user details.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  // Fetch submitted preferences
+  // Fetch submitted preferences with proper error handling
+  const fetchSubmittedPreferences = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.log("⚠️ No token found, skipping preferences fetch");
+      return;
+    }
+
+    try {
+      setIsLoadingPreferences(true);
+      console.log("🔄 Fetching preferences from:", `${API_URL}/skill/me`);
+
+      const res = await fetch(`${API_URL}/skill/me`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("📡 Response status:", res.status);
+      const data = await res.json();
+      console.log("📦 Full response data:", data);
+
+      // FIXED: Handle both response formats
+      if (res.ok) {
+        // Check if data is the skill object directly or nested in data property
+        const preferences = data.data || data;
+
+        console.log("✅ Processed preferences:", preferences);
+
+        // Check if it has the expected fields
+        if (
+          preferences &&
+          (preferences.currentRole || preferences.skills || preferences._id)
+        ) {
+          setSavedPreferences(preferences);
+          console.log("✅ Preferences set successfully!");
+        } else {
+          console.log("⚠️ No valid preferences found");
+          setSavedPreferences(null);
+        }
+      } else {
+        console.log("⚠️ API returned error:", data);
+        setSavedPreferences(null);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching preferences:", error);
+      setSavedPreferences(null);
+    } finally {
+      setIsLoadingPreferences(false);
+    }
+  };
+
+  // Delete preferences
+  const handleDeletePreferences = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    if (
+      !confirm(
+        "Are you sure you want to delete your saved preferences? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setIsDeletingPreferences(true);
+      const res = await fetch(`${API_URL}/skill`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setSavedPreferences(null);
+        toast({
+          title: "Preferences Deleted!",
+          description: "Your saved preferences have been removed.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to delete preferences.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting preferences:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingPreferences(false);
+    }
+  };
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -141,7 +287,8 @@ export default function ProfilePage() {
     const savedImage = localStorage.getItem("profileImage");
 
     if (savedProfile) {
-      setProfileData(JSON.parse(savedProfile));
+      const parsed = JSON.parse(savedProfile);
+      setProfileData(parsed);
     }
     if (savedFormData) {
       setFormData(JSON.parse(savedFormData));
@@ -152,19 +299,30 @@ export default function ProfilePage() {
     if (savedImage) {
       setProfileImage(savedImage);
     }
+
+    // Fetch user details and preferences
+    fetchUserDetails();
+    fetchSubmittedPreferences();
+    setIsVisible(true);
   }, []);
 
-  // Save data to localStorage whenever it changes
+  // Save data to localStorage
   useEffect(() => {
-    localStorage.setItem("profileData", JSON.stringify(profileData));
+    if (profileData.name || profileData.email) {
+      localStorage.setItem("profileData", JSON.stringify(profileData));
+    }
   }, [profileData]);
 
   useEffect(() => {
-    localStorage.setItem("formData", JSON.stringify(formData));
+    if (Object.keys(formData).some((key) => formData[key])) {
+      localStorage.setItem("formData", JSON.stringify(formData));
+    }
   }, [formData]);
 
   useEffect(() => {
-    localStorage.setItem("skills", JSON.stringify(skills));
+    if (skills.length > 0) {
+      localStorage.setItem("skills", JSON.stringify(skills));
+    }
   }, [skills]);
 
   useEffect(() => {
@@ -173,6 +331,7 @@ export default function ProfilePage() {
     }
   }, [profileImage]);
 
+  // Calculate profile completeness
   const calculateProfileCompleteness = () => {
     let completed = 0;
     const total = 10;
@@ -190,6 +349,10 @@ export default function ProfilePage() {
 
     setProfileCompleteness(Math.round((completed / total) * 100));
   };
+
+  useEffect(() => {
+    calculateProfileCompleteness();
+  }, [profileData, skills, formData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -224,7 +387,6 @@ export default function ProfilePage() {
   };
 
   const handleLogout = () => {
-    // Clear all localStorage data
     localStorage.removeItem("token");
     localStorage.removeItem("profileData");
     localStorage.removeItem("formData");
@@ -277,91 +439,120 @@ export default function ProfilePage() {
     }
   };
 
-  const skillOptions = [
-    "React",
-    "JavaScript",
-    "TypeScript",
-    "HTML",
-    "CSS",
-    "Node.js",
-    "Express.js",
-    "Python",
-    "Django",
-    "Java",
-    "Spring Boot",
-    "C++",
-    "SQL",
-    "MongoDB",
-    "GraphQL",
-    "Tailwind CSS",
-    "Next.js",
-    "React Native",
-    "Docker",
-    "Kubernetes",
-    "AWS",
-    "Azure",
-    "Git",
-    "Jest",
-    "Cypress",
-  ];
-
-  useEffect(() => {
-    setIsVisible(true);
-    calculateProfileCompleteness();
-  }, [profileData, skills, formData]);
-
-  const fetchUserDetails = async () => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      toast({
-        title: "Unauthorized",
-        description: "No token found. Please log in again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        toast({
-          title: "Failed to Fetch User",
-          description: data.message || "Unable to fetch user details.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setUser(data.user);
-      toast({
-        title: "Welcome!",
-        description: `Hello ${data.user.name}`,
-      });
-    } catch (error) {
-      console.error("Fetch User Error:", error);
-      toast({
-        title: "Error",
-        description: "Something went wrong while fetching user details.",
-        variant: "destructive",
-      });
-    }
+  const skillOptions = {
+    Technical: [
+      "React",
+      "JavaScript",
+      "TypeScript",
+      "HTML",
+      "CSS",
+      "Node.js",
+      "Express.js",
+      "Python",
+      "Django",
+      "Java",
+      "Spring Boot",
+      "C++",
+      "SQL",
+      "MongoDB",
+      "GraphQL",
+      "Tailwind CSS",
+      "Next.js",
+      "React Native",
+      "Docker",
+      "Kubernetes",
+      "AWS",
+      "Azure",
+      "Git",
+      "Jest",
+      "Cypress",
+    ],
+    Data_AI: [
+      "Data Analysis",
+      "Machine Learning",
+      "Deep Learning",
+      "Computer Vision",
+      "Natural Language Processing",
+      "Data Visualization",
+      "Statistics",
+      "Excel",
+      "SPSS",
+      "MATLAB",
+    ],
+    Design_Creative: [
+      "UI/UX Design",
+      "Figma",
+      "Adobe Photoshop",
+      "Adobe Illustrator",
+      "Canva",
+      "Graphic Design",
+      "Video Editing",
+      "3D Modeling",
+      "Animation",
+    ],
+    Business_Management: [
+      "Project Management",
+      "Agile Methodology",
+      "Scrum",
+      "Leadership",
+      "Team Management",
+      "Business Analysis",
+      "Marketing Strategy",
+      "Sales",
+      "Customer Relationship Management",
+      "Entrepreneurship",
+    ],
+    Counseling_Psychology: [
+      "Active Listening",
+      "Conflict Resolution",
+      "Career Counseling",
+      "Emotional Intelligence",
+      "Psychological Assessment",
+      "Cognitive Behavioral Therapy",
+      "Mindfulness Coaching",
+      "Stress Management",
+      "Life Coaching",
+    ],
+    Education: [
+      "Curriculum Design",
+      "Instructional Design",
+      "Tutoring",
+      "Educational Technology",
+      "Training & Development",
+    ],
+    Finance_Operations: [
+      "Financial Analysis",
+      "Accounting",
+      "Bookkeeping",
+      "Budgeting",
+      "Investment Management",
+      "Supply Chain Management",
+      "Operations Management",
+    ],
+    Healthcare_Wellness: [
+      "Nursing",
+      "First Aid",
+      "Medical Research",
+      "Nutrition",
+      "Fitness Training",
+      "Physiotherapy",
+      "Mental Health Awareness",
+    ],
+    Languages: ["English", "Spanish", "French", "German", "Mandarin", "Hindi"],
+    Professional: [
+      "Problem Solving",
+      "Critical Thinking",
+      "Time Management",
+      "Adaptability",
+      "Creativity",
+      "Collaboration",
+      "Decision Making",
+      "Public Speaking",
+      "Content Writing",
+      "Copywriting",
+      "Technical Writing",
+    ],
   };
-
-  useEffect(() => {
-    fetchUserDetails();
-    setIsVisible(true);
-  }, []);
-
-  // Fixed: Wrapped the orphaned code in handleSubmit function
   const handleSubmit = async () => {
     setIsLoading(true);
 
@@ -373,20 +564,22 @@ export default function ProfilePage() {
         .split(",")
         .map((p) => p.trim()),
     };
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/skill`, {
+      const res = await fetch(`${API_URL}/skill`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ ...formData, skills }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       console.log("Skill Save Response:", data);
 
       if (!res.ok) {
+        setIsLoading(false);
         return toast({
           title: "Error",
           description: data.message || "Something went wrong.",
@@ -399,6 +592,9 @@ export default function ProfilePage() {
         description: "Your profile and skills have been saved.",
       });
 
+      // Refresh preferences
+      await fetchSubmittedPreferences();
+
       router.push("/dashboard/course-explorer");
     } catch (error) {
       console.error("Save Error:", error);
@@ -407,12 +603,25 @@ export default function ProfilePage() {
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
-      {/* Mobile-First Header */}
+      {/* Header */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -526,7 +735,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Mobile Tab Selector */}
+          {/* Tabs */}
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
@@ -535,6 +744,7 @@ export default function ProfilePage() {
             }`}
             style={{ animationDelay: "0.2s" }}
           >
+            {/* Mobile Tab Selector */}
             <div className="sm:hidden">
               <Select value={activeTab} onValueChange={setActiveTab}>
                 <SelectTrigger className="w-full h-12 shadow-sm">
@@ -567,7 +777,7 @@ export default function ProfilePage() {
               </TabsList>
             </div>
 
-            {/* Profile Info Tab - Mobile Optimized */}
+            {/* Profile Info Tab */}
             <TabsContent value="profile" className="space-y-4 sm:space-y-6">
               {/* Profile Header Card */}
               <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
@@ -627,7 +837,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    {/* Quick Actions - Mobile */}
+                    {/* Quick Actions */}
                     <div className="flex sm:flex-col gap-2 w-full sm:w-auto">
                       <Button
                         variant="outline"
@@ -976,33 +1186,317 @@ export default function ProfilePage() {
               </Card>
             </TabsContent>
 
-            {/* Skills Management Tab - Mobile Optimized */}
+            {/* Skills Management Tab */}
             <TabsContent value="skills" className="space-y-4 sm:space-y-6">
-              {/* Add Skill Card */}
               <div className="space-y-6">
-                {/* Career Form */}
-                <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-cyan-50">
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="text-base sm:text-lg">
-                      Career Profile
-                    </CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">
-                      Fill your learning preferences
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
-                    {Object.keys(formData).map((field) => {
-                      const renderInput = () => {
-                        if (field === "experience") {
+                {/* Saved Preferences Section */}
+                {isLoadingPreferences ? (
+                  <Card className="border-0 shadow-xl bg-gradient-to-r from-purple-50 to-pink-50">
+                    <CardContent className="p-6 text-center">
+                      <RefreshCw className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">
+                        Loading preferences...
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : savedPreferences ? (
+                  <Card className="border-0 shadow-xl bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200">
+                    <CardHeader className="p-4 sm:p-6">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                          <div className="p-1.5 bg-purple-200 rounded-lg">
+                            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                          </div>
+                          Submitted Preferences
+                        </CardTitle>
+                        <Badge className="bg-purple-100 text-purple-700 border-purple-300">
+                          Already Saved
+                        </Badge>
+                      </div>
+                      <CardDescription className="text-xs sm:text-sm">
+                        You have already submitted your preferences. Delete to
+                        create new ones.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
+                      {/* Display saved data */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white rounded-xl border-2 border-purple-100">
+                        <div>
+                          <Label className="text-xs font-semibold text-gray-500">
+                            Current Role
+                          </Label>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {savedPreferences.currentRole || "Not specified"}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs font-semibold text-gray-500">
+                            Experience
+                          </Label>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {savedPreferences.experience || "Not specified"}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs font-semibold text-gray-500">
+                            Budget
+                          </Label>
+                          <p className="text-sm font-medium text-gray-900 mt-1 capitalize">
+                            {savedPreferences.budget || "Not specified"}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs font-semibold text-gray-500">
+                            Time Commitment
+                          </Label>
+                          <p className="text-sm font-medium text-gray-900 mt-1 capitalize">
+                            {savedPreferences.timeCommitment || "Not specified"}
+                          </p>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <Label className="text-xs font-semibold text-gray-500">
+                            Career Goals
+                          </Label>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {savedPreferences.careerGoals?.join(", ") ||
+                              "Not specified"}
+                          </p>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <Label className="text-xs font-semibold text-gray-500">
+                            Learning Style
+                          </Label>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {savedPreferences.learningStyle || "Not specified"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Skills Display */}
+                      {savedPreferences.skills &&
+                        savedPreferences.skills.length > 0 && (
+                          <div className="p-4 bg-white rounded-xl border-2 border-purple-100">
+                            <Label className="text-xs font-semibold text-gray-500 mb-3 block">
+                              Saved Skills ({savedPreferences.skills.length})
+                            </Label>
+                            <div className="flex flex-wrap gap-2">
+                              {savedPreferences.skills.map((skill, index) => (
+                                <Badge
+                                  key={index}
+                                  className={`${getLevelColor(
+                                    skill.level
+                                  )} border`}
+                                >
+                                  {skill.name} • {skill.level}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-purple-200">
+                        <Button
+                          onClick={handleDeletePreferences}
+                          disabled={isDeletingPreferences}
+                          variant="destructive"
+                          className="flex-1 h-12"
+                        >
+                          {isDeletingPreferences ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-4 w-4 mr-2" />
+                              Delete Preferences
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            router.push("/dashboard/course-explorer")
+                          }
+                          className="flex-1 h-12 bg-gradient-to-r from-purple-600 to-indigo-600"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-2" />
+                          Continue to Courses
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-center text-gray-500 mt-2">
+                        💡 Delete your current preferences to submit new ones
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : null}
+
+                {/* Show Forms only if no saved preferences */}
+                {!savedPreferences && (
+                  <>
+                    {/* Career Form */}
+                    <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-cyan-50">
+                      <CardHeader className="p-4 sm:p-6">
+                        <CardTitle className="text-base sm:text-lg">
+                          Career Profile
+                        </CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">
+                          Fill your learning preferences
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
+                        {Object.keys(formData).map((field) => {
+                          const renderInput = () => {
+                            if (field === "experience") {
+                              return (
+                                <Select
+                                  onValueChange={(value) =>
+                                    setFormData({ ...formData, [field]: value })
+                                  }
+                                  value={formData.experience}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select experience" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Beginner">
+                                      Beginner
+                                    </SelectItem>
+                                    <SelectItem value="Intermediate">
+                                      Intermediate
+                                    </SelectItem>
+                                    <SelectItem value="Advanced">
+                                      Advanced
+                                    </SelectItem>
+                                    <SelectItem value="Expert">
+                                      Expert
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              );
+                            } else if (field === "timeCommitment") {
+                              return (
+                                <Select
+                                  onValueChange={(value) =>
+                                    setFormData({ ...formData, [field]: value })
+                                  }
+                                  value={formData.timeCommitment}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select time commitment" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="part-time">
+                                      Part-time
+                                    </SelectItem>
+                                    <SelectItem value="full-time">
+                                      Full-time
+                                    </SelectItem>
+                                    <SelectItem value="flexible">
+                                      Flexible
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              );
+                            } else if (field === "budget") {
+                              return (
+                                <Select
+                                  onValueChange={(value) =>
+                                    setFormData({ ...formData, [field]: value })
+                                  }
+                                  value={formData.budget}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select budget" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="low">Low</SelectItem>
+                                    <SelectItem value="medium">
+                                      Medium
+                                    </SelectItem>
+                                    <SelectItem value="high">High</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              );
+                            } else {
+                              return (
+                                <Input
+                                  value={(formData as any)[field]}
+                                  onChange={(e) =>
+                                    setFormData({
+                                      ...formData,
+                                      [field]: e.target.value,
+                                    })
+                                  }
+                                />
+                              );
+                            }
+                          };
+
                           return (
+                            <div key={field} className="space-y-2">
+                              <Label className="capitalize">
+                                {field.replace(/([A-Z])/g, " $1").trim()}
+                              </Label>
+                              {renderInput()}
+                            </div>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+
+                    {/* Skill Form */}
+                    <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-cyan-50">
+                      <CardHeader className="p-4 sm:p-6">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                          <div className="p-1.5 bg-blue-200 rounded-lg">
+                            <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                          </div>
+                          Add New Skill
+                        </CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">
+                          Build your skill profile to get better job matches
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-4 sm:p-6 pt-0">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+                          <div className="flex-1 space-y-2">
+                            <Label className="text-sm font-medium">Skill</Label>
                             <Select
-                              onValueChange={(value) =>
-                                setFormData({ ...formData, [field]: value })
-                              }
-                              value={formData.experience}
+                              onValueChange={setSelectedSkill}
+                              value={selectedSkill}
                             >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select experience" />
+                              <SelectTrigger className="h-12 border-2 focus:border-blue-500">
+                                <SelectValue placeholder="Select a skill" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(skillOptions).map(
+                                  ([category, skills]) => (
+                                    <React.Fragment key={category}>
+                                      <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
+                                        {category}
+                                      </div>
+                                      {skills.map((skill) => (
+                                        <SelectItem key={skill} value={skill}>
+                                          {skill}
+                                        </SelectItem>
+                                      ))}
+                                    </React.Fragment>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="flex-1 sm:w-40 space-y-2">
+                            <Label className="text-sm font-medium">Level</Label>
+                            <Select
+                              onValueChange={setSelectedLevel}
+                              value={selectedLevel}
+                            >
+                              <SelectTrigger className="h-12 border-2 focus:border-blue-500">
+                                <SelectValue placeholder="Select level" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="Beginner">
@@ -1014,388 +1508,126 @@ export default function ProfilePage() {
                                 <SelectItem value="Advanced">
                                   Advanced
                                 </SelectItem>
-                                <SelectItem value="Expert">Expert</SelectItem>
                               </SelectContent>
                             </Select>
-                          );
-                        } else if (field === "timeCommitment") {
-                          return (
-                            <Select
-                              onValueChange={(value) =>
-                                setFormData({ ...formData, [field]: value })
-                              }
-                              value={formData.timeCommitment}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select time commitment" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="part-time">
-                                  Part-time
-                                </SelectItem>
-                                <SelectItem value="full-time">
-                                  Full-time
-                                </SelectItem>
-                                <SelectItem value="flexible">
-                                  Flexible
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          );
-                        } else if (field === "budget") {
-                          return (
-                            <Select
-                              onValueChange={(value) =>
-                                setFormData({ ...formData, [field]: value })
-                              }
-                              value={formData.budget}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select budget" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          );
-                        } else {
-                          return (
-                            <Input
-                              value={(formData as any)[field]}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  [field]: e.target.value,
-                                })
-                              }
-                            />
-                          );
-                        }
-                      };
+                          </div>
 
-                      return (
-                        <div key={field} className="space-y-2">
-                          <Label className="capitalize">{field}</Label>
-                          {renderInput()}
+                          <Button
+                            onClick={addSkill}
+                            className="h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
+                          >
+                            <Plus className="h-4 w-4 mr-2" /> Add
+                          </Button>
                         </div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
 
-                {/* Skill Form */}
-                <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-cyan-50">
+                    {/* Skills List */}
+                    <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
+                      <CardHeader className="p-4 sm:p-6">
+                        <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-purple-100 rounded-lg">
+                              <Brain className="h-4 w-4 text-purple-600" />
+                            </div>
+                            Your Skills ({skills.length})
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 sm:p-6 pt-0">
+                        {skills.length === 0 ? (
+                          <p className="text-center text-sm text-gray-500">
+                            No skills added yet
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {skills.map((skill, index) => (
+                              <div
+                                key={index}
+                                className="group p-4 border-2 border-gray-200 rounded-xl bg-white hover:shadow-lg transition-all"
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className="font-semibold text-sm">
+                                    {skill.name}
+                                  </h4>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeSkill(skill.name)}
+                                    className="p-1 h-auto text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <Badge
+                                  className={`${getLevelColor(
+                                    skill.level
+                                  )} text-xs border`}
+                                >
+                                  {skill.level}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Submit Button */}
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={isLoading}
+                      className="w-full h-12 bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg hover:from-purple-700 hover:to-indigo-700"
+                    >
+                      {isLoading ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Profile & Skills
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                {/* LinkedIn Integration */}
+                <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-indigo-50">
                   <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                      <div className="p-1.5 bg-blue-200 rounded-lg">
-                        <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                      </div>
-                      Add New Skill
+                    <CardTitle className="text-base sm:text-lg">
+                      LinkedIn Integration
                     </CardTitle>
                     <CardDescription className="text-xs sm:text-sm">
-                      Build your skill profile to get better job matches
+                      Connect your LinkedIn profile to automatically sync your
+                      skills
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6 pt-0">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-                      <div className="flex-1 space-y-2">
-                        <Label className="text-sm font-medium">Skill</Label>
-                        <Select
-                          onValueChange={setSelectedSkill}
-                          value={selectedSkill}
-                        >
-                          <SelectTrigger className="h-12 border-2 focus:border-blue-500">
-                            <SelectValue placeholder="Select a skill" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {skillOptions.map((skill) => (
-                              <SelectItem key={skill} value={skill}>
-                                {skill}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 p-4 sm:p-6 bg-white rounded-xl border border-blue-200">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                          <Linkedin className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="text-center sm:text-left">
+                          <p className="font-semibold text-blue-900 text-sm sm:text-base">
+                            Connect LinkedIn
+                          </p>
+                          <p className="text-xs sm:text-sm text-blue-700">
+                            Auto-import skills and experience
+                          </p>
+                        </div>
                       </div>
-
-                      <div className="flex-1 sm:w-40 space-y-2">
-                        <Label className="text-sm font-medium">Level</Label>
-                        <Select
-                          onValueChange={setSelectedLevel}
-                          value={selectedLevel}
-                        >
-                          <SelectTrigger className="h-12 border-2 focus:border-blue-500">
-                            <SelectValue placeholder="Select level" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Beginner">Beginner</SelectItem>
-                            <SelectItem value="Intermediate">
-                              Intermediate
-                            </SelectItem>
-                            <SelectItem value="Advanced">Advanced</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Button
-                        onClick={addSkill}
-                        className="h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
-                      >
-                        <Plus className="h-4 w-4 mr-2" /> Add
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
+                        <Linkedin className="h-4 w-4 mr-2" />
+                        Connect Account
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Skills List */}
-                <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-purple-100 rounded-lg">
-                          <Brain className="h-4 w-4 text-purple-600" />
-                        </div>
-                        Your Skills ({skills.length})
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 sm:p-6 pt-0">
-                    {skills.length === 0 ? (
-                      <p className="text-center text-sm text-gray-500">
-                        No skills added yet
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {skills.map((skill, index) => (
-                          <div
-                            key={index}
-                            className="group p-4 border-2 border-gray-200 rounded-xl bg-white"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <h4 className="font-semibold text-sm">
-                                {skill.name}
-                              </h4>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeSkill(skill.name)}
-                                className="p-1 h-auto text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <Badge className="text-xs border">
-                              {skill.level}
-                            </Badge>
-                            {!skill.verified && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full text-xs mt-2"
-                              >
-                                <Shield className="h-3 w-3 mr-1" />
-                                Get Verified
-                              </Button>
-                            )}
-                            {skill.verified && (
-                              <Badge className="bg-green-100 text-green-800 text-xs mt-2 flex items-center gap-1">
-                                <CheckCircle className="h-3 w-3" /> Verified
-                              </Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>Save Profile & Skills</>
-                  )}
-                </Button>
               </div>
-              {/* LinkedIn Integration */}
-              <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-indigo-50">
-                <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="text-base sm:text-lg">
-                    LinkedIn Integration
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    Connect your LinkedIn profile to automatically sync your
-                    skills
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6 pt-0">
-                  <div className="flex flex-col sm:flex-row items-center gap-4 p-4 sm:p-6 bg-white rounded-xl border border-blue-200">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                        <Linkedin className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="text-center sm:text-left">
-                        <p className="font-semibold text-blue-900 text-sm sm:text-base">
-                          Connect LinkedIn
-                        </p>
-                        <p className="text-xs sm:text-sm text-blue-700">
-                          Auto-import skills and experience
-                        </p>
-                      </div>
-                    </div>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
-                      <Linkedin className="h-4 w-4 mr-2" />
-                      Connect Account
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Resume History Tab - Mobile Optimized */}
-            <TabsContent value="resume" className="space-y-4 sm:space-y-6">
-              {/* Upload New Resume */}
-              <Card className="border-0 shadow-xl bg-gradient-to-r from-green-50 to-emerald-50">
-                <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <div className="p-1.5 bg-green-200 rounded-lg">
-                      <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                    </div>
-                    Upload New Resume
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    Keep your resume up to date for better analysis and job
-                    matching
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6 pt-0">
-                  <div className="border-2 border-dashed border-green-300 rounded-xl p-6 sm:p-8 text-center hover:border-green-400 hover:bg-green-50/50 transition-all duration-300 cursor-pointer group">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
-                      <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
-                    </div>
-                    <p className="text-sm sm:text-base text-gray-700 font-medium mb-2">
-                      Drag and drop your resume here
-                    </p>
-                    <p className="text-xs sm:text-sm text-gray-500 mb-4">
-                      or click to browse â€¢ Supports PDF, DOC, and DOCX files
-                      â€¢ Max 10MB
-                    </p>
-                    <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Choose File
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Resume History */}
-              <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
-                <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <div className="p-1.5 bg-orange-100 rounded-lg">
-                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
-                    </div>
-                    Resume Analysis History
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    View your previous resume uploads and their analysis scores
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6 pt-0">
-                  <div className="space-y-3 sm:space-y-4">
-                    {mockUserData.resumeHistory.map((resume) => (
-                      <div
-                        key={resume.id}
-                        className="group flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 border-2 border-gray-200 rounded-xl hover:shadow-lg hover:border-purple-300 transition-all duration-300 bg-white"
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm sm:text-base text-gray-900 truncate">
-                              {resume.name}
-                            </p>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                <span>
-                                  {new Date(
-                                    resume.uploadDate
-                                  ).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <span className="hidden sm:inline">â€¢</span>
-                              <span>{resume.size}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between w-full sm:w-auto sm:flex-col sm:items-end gap-2 sm:gap-1">
-                          <div className="text-left sm:text-right">
-                            <div className="flex items-center gap-2 sm:justify-end">
-                              <div
-                                className={`text-base sm:text-lg font-bold ${
-                                  resume.score >= 80
-                                    ? "text-green-600"
-                                    : resume.score >= 70
-                                    ? "text-blue-600"
-                                    : "text-orange-600"
-                                }`}
-                              >
-                                {resume.score}/100
-                              </div>
-                              <TrendingUp
-                                className={`h-4 w-4 ${
-                                  resume.score >= 80
-                                    ? "text-green-600"
-                                    : resume.score >= 70
-                                    ? "text-blue-600"
-                                    : "text-orange-600"
-                                }`}
-                              />
-                            </div>
-                            <p className="text-xs sm:text-sm text-gray-600">
-                              {resume.score >= 80
-                                ? "Excellent"
-                                : resume.score >= 70
-                                ? "Good"
-                                : "Needs Improvement"}
-                            </p>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs"
-                            >
-                              <Eye className="h-3 w-3 mr-1" />
-                              View
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs"
-                            >
-                              <Download className="h-3 w-3 mr-1" />
-                              Download
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
           </Tabs>
 

@@ -32,8 +32,11 @@ import {
   ChevronRight,
   Filter,
   Search,
+  Download,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { downloadCareerPDF } from "@/app/utils/recommendationPdf";
 
 export default function RecommendationsPage() {
   const [recommendations, setRecommendations] = useState<any>(null);
@@ -42,6 +45,41 @@ export default function RecommendationsPage() {
     "immediate" | "shortTerm" | "longTerm"
   >("immediate");
   const [expandedCareer, setExpandedCareer] = useState<number | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  const handleDownloadPDF = async () => {
+    if (!recommendations) return;
+
+    setDownloading(true);
+
+    try {
+      // Prepare data for PDF
+      const pdfData =
+        recommendations.topRecommendations?.map((rec: any) => ({
+          career: rec.title,
+          score: parseInt(rec.match) || 85,
+          description: rec.description,
+          skills: rec.requiredSkills || [],
+          salaryRange: rec.salaryRange,
+          jobGrowth: rec.growthOutlook,
+          education: "Based on your profile",
+          topCompanies: [], // Add if available
+        })) || [];
+
+      // Call the PDF generation function
+      downloadCareerPDF(pdfData, userName);
+
+      // Reset downloading state after a delay
+      setTimeout(() => {
+        setDownloading(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download PDF. Please try again.");
+      setDownloading(false);
+    }
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("careerRecommendations");
@@ -137,6 +175,27 @@ export default function RecommendationsPage() {
           </div>
         </div>
       </div>
+
+      <Button
+        onClick={handleDownloadPDF}
+        disabled={downloading}
+        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+        size="sm"
+      >
+        {downloading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Generating...</span>
+            <span className="sm:hidden">...</span>
+          </>
+        ) : (
+          <>
+            <Download className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Download PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </>
+        )}
+      </Button>
 
       {/* Main Content */}
       <div className="px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
