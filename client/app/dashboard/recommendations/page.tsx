@@ -504,7 +504,7 @@ export default function RecommendationsPage() {
             </CardContent>
           </Card>
 
-          {/* Call-to-Action - Mobile Optimized */}
+          {/* Call-to-Action - Mobile Optimized with Navigation Links */}
           <Card
             className={`border-2 border-dashed border-purple-500 bg-gradient-to-r from-purple-50 to-blue-50 shadow-xl hover:shadow-2xl transition-all duration-500 ${
               isVisible ? "animate-fadeInUp" : "opacity-0"
@@ -526,21 +526,25 @@ export default function RecommendationsPage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex-1 sm:flex-initial"
-                  >
-                    <Rocket className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Start Learning
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-2 border-purple-300 hover:bg-purple-50 flex-1 sm:flex-initial"
-                  >
-                    <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    View Courses
-                  </Button>
+                  <Link href="/dashboard/career-roadmap" className="flex-1 sm:flex-initial">
+                    <Button
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Rocket className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                      Start Learning
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/course-explorer" className="flex-1 sm:flex-initial">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full border-2 border-purple-300 hover:bg-purple-50"
+                    >
+                      <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                      View Courses
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </CardContent>
