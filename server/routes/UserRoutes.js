@@ -5,15 +5,18 @@ import {
   getAllUsers,
   getUserById,
   getMyProfile,
+  googleAuth,
 } from "../controllers/authController.js";
-import { protect } from "../middleware/authMiddleware.js"; // Import Middleware
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/all", getAllUsers);
-router.get("/profile/:id", getUserById);
-router.get("/me", protect, getMyProfile); // <-- New Route to fetch logged-in user profile
+router.post("/google", googleAuth);
+
+router.get("/me", protect, getMyProfile);
+router.get("/all", protect, getAllUsers);
+router.get("/profile/:id", protect, getUserById);
 
 export default router;

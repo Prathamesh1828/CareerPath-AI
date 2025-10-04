@@ -9,7 +9,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "seed": "node scripts/seedCourses.js",
+    "seed:courses": "node scripts/seedCourses.js"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.12"

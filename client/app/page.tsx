@@ -22,9 +22,13 @@ import {
   Menu,
   X,
   Pause,
+  Loader2,
+  Quote,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function LandingPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -53,9 +57,54 @@ export default function LandingPage() {
     }
   };
 
-  // Ensure button updates on manual pause
   const handlePause = () => setIsPlaying(false);
   const handlePlay = () => setIsPlaying(true);
+
+  // Reviews state
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+
+  // Fetch reviews
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    setIsLoadingReviews(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/reviews?status=approved&limit=6&sort=-createdAt`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setReviews(data.data);
+      } else {
+        console.error("Failed to fetch reviews:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    } finally {
+      setIsLoadingReviews(false);
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   const features = [
     {
@@ -89,33 +138,6 @@ export default function LandingPage() {
         "Visual analytics and reports on your career progress and market trends",
       color: "text-orange-600",
       bgColor: "bg-orange-100",
-    },
-  ];
-
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Frontend Developer",
-      company: "Google",
-      image: "/placeholder.svg?height=60&width=60",
-      quote:
-        "Career-Path AI helped me transition from marketing to tech. The roadmap was spot-on!",
-    },
-    {
-      name: "Michael Chen",
-      role: "Data Scientist",
-      company: "Microsoft",
-      image: "/placeholder.svg?height=60&width=60",
-      quote:
-        "The resume analysis feature increased my interview rate by 300%. Incredible tool!",
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Full Stack Developer",
-      company: "Netflix",
-      image: "/placeholder.svg?height=60&width=60",
-      quote:
-        "From zero coding experience to landing my dream job in 8 months. Thank you!",
     },
   ];
 
@@ -201,7 +223,6 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-animation py-12 sm:py-16 lg:py-20 xl:py-32">
-        {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-20 sm:-top-40 -right-20 sm:-right-40 w-40 h-40 sm:w-80 sm:h-80 bg-white/10 rounded-full animate-float"></div>
           <div
@@ -232,7 +253,7 @@ export default function LandingPage() {
                 <Link href="/register">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto bg-white text-[#6C63FF] hover:bg-gray-100 rounded-full px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold "
+                    className="w-full sm:w-auto bg-white text-[#6C63FF] hover:bg-gray-100 rounded-full px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold"
                   >
                     Get Started Free
                     <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -241,7 +262,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#6C63FF] rounded-full px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold bg-transparent "
+                  className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#6C63FF] rounded-full px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold bg-transparent"
                 >
                   <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   Watch Demo
@@ -249,14 +270,13 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Hero Image/Video */}
             <div
               className={`relative order-first lg:order-last ${
                 isVisible ? "animate-slideInRight" : "opacity-0"
               }`}
               style={{ animationDelay: "0.3s" }}
             >
-              <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 sm:p-8 ">
+              <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 sm:p-8">
                 <img
                   src="/landing.png"
                   alt="Career-Path AI Dashboard"
@@ -294,7 +314,7 @@ export default function LandingPage() {
             {features.map((feature, index) => (
               <Card
                 key={index}
-                className={`border-2 border-gray-100 hover:border-[#6C63FF] transition-all duration-500  animate-fadeInUp ${
+                className={`border-2 border-gray-100 hover:border-[#6C63FF] transition-all duration-500 animate-fadeInUp ${
                   activeFeature === index
                     ? "ring-2 ring-[#6C63FF] ring-opacity-50"
                     : ""
@@ -359,7 +379,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="animate-slideInRight order-1 lg:order-2">
-              <div className="relative bg-white rounded-2xl shadow-2xl p-3 sm:p-4 ">
+              <div className="relative bg-white rounded-2xl shadow-2xl p-3 sm:p-4">
                 <div className="aspect-video bg-gradient-to-br from-[#6C63FF] to-[#5B54E6] rounded-lg flex items-center justify-center relative overflow-hidden">
                   <video
                     ref={videoRef}
@@ -376,7 +396,7 @@ export default function LandingPage() {
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                     <Button
                       size="lg"
-                      className="bg-white/90 text-[#6C63FF] hover:bg-white rounded-full p-3 sm:p-4 "
+                      className="bg-white/90 text-[#6C63FF] hover:bg-white rounded-full p-3 sm:p-4"
                       onClick={handleToggle}
                     >
                       {isPlaying ? (
@@ -393,60 +413,99 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Reviews Section - FETCHED FROM API */}
       <section className="py-12 sm:py-16 lg:py-20 bg-white">
         <div className="container-responsive">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-responsive-2xl font-bold text-gray-900 mb-4 animate-fadeInUp">
-              Success Stories
+              What Our Users Say
             </h2>
             <p
               className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto animate-fadeInUp"
               style={{ animationDelay: "0.2s" }}
             >
-              Join thousands of professionals who've accelerated their careers
-              with AI
+              Real feedback from professionals who've accelerated their careers
+              with Career-Path AI
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card
-                key={index}
-                className=" animate-fadeInUp border-2 border-gray-100 hover:border-[#6C63FF] transition-all duration-300"
-                style={{ animationDelay: `${index * 0.2}s` }}
-              >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center mb-4">
-                    <img
-                      src={testimonial.image || "/placeholder.svg"}
-                      alt={testimonial.name}
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full mr-3 sm:mr-4"
-                    />
-                    <div>
-                      <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
-                        {testimonial.name}
-                      </h4>
-                      <p className="text-xs sm:text-sm text-gray-600">
-                        {testimonial.role} at {testimonial.company}
-                      </p>
+          {isLoadingReviews ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-12 w-12 animate-spin text-[#6C63FF]" />
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-12">
+              <Quote className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">
+                No reviews yet. Be the first to share your experience!
+              </p>
+              <Link href="/register">
+                <Button className="mt-4 bg-gradient-to-r from-[#6C63FF] to-[#5B54E6]">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {reviews.slice(0, 6).map((review, index) => (
+                <Card
+                  key={review._id || index}
+                  className="animate-fadeInUp border-2 border-gray-100 hover:border-[#6C63FF] hover:shadow-xl transition-all duration-300 group"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <CardContent className="p-6">
+                    <Quote className="h-8 w-8 text-[#6C63FF] mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+
+                    <p className="text-gray-700 italic text-sm sm:text-base mb-6 leading-relaxed line-clamp-4">
+                      "{review.review}"
+                    </p>
+
+                    <div className="border-t border-gray-100 pt-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base mb-1">
+                            {review.name}
+                          </h4>
+                          <p className="text-xs sm:text-sm text-[#6C63FF] font-medium line-clamp-2">
+                            {review.position}
+                          </p>
+                        </div>
+
+                        {review.createdAt && (
+                          <div className="ml-2 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full shrink-0">
+                            {formatDate(review.createdAt)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex mt-4 gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="h-4 w-4 text-yellow-400 fill-current"
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-gray-700 italic text-sm sm:text-base line-clamp-3">
-                    "{testimonial.quote}"
-                  </p>
-                  <div className="flex mt-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-current"
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {reviews.length > 0 && (
+            <div className="text-center mt-12">
+              <Link href="/dashboard">
+                <Button
+                  variant="outline"
+                  className="border-[#6C63FF] text-[#6C63FF] hover:bg-[#6C63FF] hover:text-white rounded-full px-8"
+                >
+                  View All Reviews
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -457,7 +516,11 @@ export default function LandingPage() {
             {[
               { number: "50,000+", label: "Resumes Analyzed", icon: FileText },
               { number: "25,000+", label: "Career Paths Created", icon: Map },
-              { number: "95%", label: "User Satisfaction", icon: Users },
+              {
+                number: reviews.length.toString(),
+                label: "User Reviews",
+                icon: Star,
+              },
               {
                 number: "300%",
                 label: "Average Salary Increase",
@@ -466,7 +529,7 @@ export default function LandingPage() {
             ].map((stat, index) => (
               <div
                 key={index}
-                className="animate-fadeInUp "
+                className="animate-fadeInUp"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6">
@@ -499,7 +562,7 @@ export default function LandingPage() {
               <Link href="/register">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto bg-gradient-to-r from-[#6C63FF] to-[#5B54E6] hover:from-[#5B54E6] hover:to-[#4F46E5] text-white rounded-full px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold "
+                  className="w-full sm:w-auto bg-gradient-to-r from-[#6C63FF] to-[#5B54E6] hover:from-[#5B54E6] hover:to-[#4F46E5] text-white rounded-full px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold"
                 >
                   Start Your Journey
                   <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -508,7 +571,7 @@ export default function LandingPage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto border-[#6C63FF] text-[#6C63FF] hover:bg-[#6C63FF] hover:text-white rounded-full px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold  bg-transparent"
+                className="w-full sm:w-auto border-[#6C63FF] text-[#6C63FF] hover:bg-[#6C63FF] hover:text-white rounded-full px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold bg-transparent"
               >
                 Schedule Demo
               </Button>
@@ -536,34 +599,6 @@ export default function LandingPage() {
                 Empowering careers with AI-driven insights and personalized
                 guidance. Transform your professional journey today.
               </p>
-              <div className="flex space-x-4">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-400 hover:text-white"
-                >
-                  <svg
-                    className="h-4 w-4 sm:h-5 sm:w-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-                  </svg>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-400 hover:text-white"
-                >
-                  <svg
-                    className="h-4 w-4 sm:h-5 sm:w-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
-                  </svg>
-                </Button>
-              </div>
             </div>
             <div>
               <h3 className="font-semibold mb-4 text-sm sm:text-base">
@@ -578,16 +613,6 @@ export default function LandingPage() {
                 <li>
                   <a href="#" className="hover:text-white transition-colors">
                     Pricing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    API
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Integrations
                   </a>
                 </li>
               </ul>
@@ -605,22 +630,12 @@ export default function LandingPage() {
                     Terms of Service
                   </a>
                 </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Contact
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Support
-                  </a>
-                </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-gray-400 text-sm">
             <p>
-              &copy; 2024 Career-Path AI. All rights reserved. Made with ❤️ for
+              &copy; 2025 Career-Path AI. All rights reserved. Made with ❤️ for
               career growth.
             </p>
           </div>
