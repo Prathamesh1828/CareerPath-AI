@@ -33,8 +33,10 @@ import {
   FileCheck,
   AlertTriangle,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { generateResumePDF } from "@/lib/pdf-generator";
+import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
+import { useUserActivityTracker } from "@/hooks/useUserActivityTracker";
 
 interface PersonalInfo {
   name: string;
@@ -77,6 +79,14 @@ export default function ResumeAnalyzerPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  const { triggerResumeAnalysisComplete, triggerResumeOptimization } = useNotificationTriggers();
+  const { trackResumeUpload, trackPageVisit } = useUserActivityTracker();
+
+  // Track page visit on component mount
+  useEffect(() => {
+    trackPageVisit('resume-analyzer');
+  }, [trackPageVisit]);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -105,7 +115,19 @@ export default function ResumeAnalyzerPage() {
         }
 
         setAnalysisData(data);
-      } catch (err) {
+      
+      // Track resume upload and trigger notifications
+      trackResumeUpload(file.name);
+      
+      // Trigger notifications based on analysis results
+      if (data.overallScore) {
+        triggerResumeAnalysisComplete(data.overallScore);
+        
+        if (data.suggestions && data.suggestions.length > 0) {
+          triggerResumeOptimization(data.suggestions);
+        }
+      }
+    } catch (err) {
         console.error("Error:", err);
         const errorMessage =
           err instanceof Error

@@ -46,6 +46,8 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/components/ui/use-toast";
+import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
+import { useUserActivityTracker } from "@/hooks/useUserActivityTracker";
 
 // User Profile for AI Recommendations (can be customized based on user selection)
 const userProfile = {
@@ -8744,7 +8746,15 @@ export default function CourseExplorerPage() {
   const [bookmarkedCourses, setBookmarkedCourses] = useState(new Set());
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState("grid"); // grid or list
+  
+  const { triggerCourseRecommendation } = useNotificationTriggers();
+  const { trackCourseBookmark, trackPageVisit } = useUserActivityTracker();
   const [showFilters, setShowFilters] = useState(false);
+
+  // Track page visit on component mount
+  useEffect(() => {
+    trackPageVisit('course-explorer');
+  }, [trackPageVisit]);
 
   const [formData, setFormData] = useState({
     currentRole: "",
@@ -8767,6 +8777,28 @@ export default function CourseExplorerPage() {
       const coursesWithAI = aiEngine.getRecommendations(filteredCourses.length);
 
       setCourses(coursesWithAI);
+      
+      // Trigger course recommendation notification only if preferences have changed
+      const recommendedCourses = coursesWithAI.filter((course: any) => course.isRecommended);
+      if (recommendedCourses.length > 0) {
+        const category = formData.careerGoals?.[0] || 'your interests';
+        
+        // Check if this is due to a preference change
+        const currentPreferences = JSON.stringify(formData);
+        const lastPreferences = localStorage.getItem('lastCoursePreferences');
+        const isPreferenceChange = lastPreferences && lastPreferences !== currentPreferences;
+        
+        // Store current preferences for next comparison
+        localStorage.setItem('lastCoursePreferences', currentPreferences);
+        
+        // Only trigger notification if preferences changed or it's been a while
+        if (isPreferenceChange) {
+          triggerCourseRecommendation(recommendedCourses.length, category, true); // Force notify on preference change
+        } else if (!lastPreferences) {
+          // First time visit - don't spam, but allow one notification
+          triggerCourseRecommendation(recommendedCourses.length, category);
+        }
+      }
     } catch (error) {
       console.error("Error fetching courses:", error);
       setCourses([]);
@@ -8886,10 +8918,18 @@ export default function CourseExplorerPage() {
   const toggleBookmark = (courseId) => {
     setBookmarkedCourses((prev) => {
       const newBookmarks = new Set(prev);
+      const isBookmarking = !newBookmarks.has(courseId);
+      
       if (newBookmarks.has(courseId)) {
         newBookmarks.delete(courseId);
       } else {
         newBookmarks.add(courseId);
+        
+        // Find course details and track bookmark
+        const course = courses.find((c: any) => c.id === courseId);
+        if (course && isBookmarking) {
+          trackCourseBookmark(courseId.toString(), course.title);
+        }
       }
       
       // Save to localStorage

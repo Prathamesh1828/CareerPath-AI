@@ -12,9 +12,10 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { Bell, Settings, User, LogOut } from "lucide-react"
+import { Settings, User, LogOut } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -154,12 +155,7 @@ export function DashboardHeader() {
 
         <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-10 sm:w-10">
-            <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="absolute -top-1 -right-1 h-2 w-2 sm:h-3 sm:w-3 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
-              <span className="hidden sm:inline">3</span>
-            </span>
-          </Button>
+          <NotificationDropdown />
 
           {/* User Menu */}
           <DropdownMenu>
