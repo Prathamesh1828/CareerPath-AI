@@ -1,17 +1,60 @@
 import Skill from "../models/Skill.js";
 
 // @desc    Create new user skill
-// @route   POST /api/skill
+
 export const createskill = async (req, res) => {
   try {
-    // ✅ req.user comes from JWT middleware
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
-    // Create skill document for this user
-    const newSkill = await Skill.create({ ...req.body, userId });
+    // Clean incoming data
+    const {
+      currentRole,
+      experience,
+      skills = [],
+      careerGoals = "",
+      preferredPlatforms = "",
+      budget,
+      timeCommitment,
+      learningStyle = "",
+    } = req.body;
+
+    // Convert comma-separated strings to arrays
+    const cleanedCareerGoals = Array.isArray(careerGoals)
+      ? careerGoals
+      : careerGoals
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean);
+
+    const cleanedPlatforms = Array.isArray(preferredPlatforms)
+      ? preferredPlatforms
+      : preferredPlatforms
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean);
+
+    const cleanedLearningStyles = Array.isArray(learningStyle)
+      ? learningStyle
+      : learningStyle
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+    // Create document
+    const newSkill = await Skill.create({
+      userId,
+      currentRole,
+      experience,
+      skills, // already array of {name, level, verified}
+      careerGoals: cleanedCareerGoals,
+      preferredPlatforms: cleanedPlatforms,
+      budget,
+      timeCommitment,
+      learningStyle: cleanedLearningStyles,
+    });
 
     res.status(201).json(newSkill);
   } catch (error) {
@@ -75,23 +118,25 @@ export const deleteskill = async (req, res) => {
 };
 
 // controllers/skillController.js
+
+// GET /api/skills/me
 export const getMyskill = async (req, res) => {
   try {
-    const userId = req.user.id; // comes from JWT middleware
-
-    // Fetch only this user's skill document
-    const profile = await Skill.findOne({ userId });
-
-    if (!profile) {
-      return res
-        .status(404)
-        .json({ message: "Profile not found for this user" });
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
     }
 
-    res.json(profile);
+    const skillProfile = await Skill.findOne({ userId });
+
+    if (!skillProfile) {
+      return res.status(404).json({ message: "No skill profile found" });
+    }
+
+    res.status(200).json(skillProfile);
   } catch (error) {
-    console.error("getMyskill error:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
+    console.error("Fetch skill error:", error);
+    res.status(500).json({ message: "Failed to fetch skill profile", error });
   }
 };
 

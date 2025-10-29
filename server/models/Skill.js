@@ -1,10 +1,20 @@
 import mongoose from "mongoose";
 
+const SkillItemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  level: {
+    type: String,
+    enum: ["Beginner", "Intermediate", "Advanced"],
+    required: true,
+  },
+  verified: { type: Boolean, default: false },
+});
+
 const SkillSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Optional, if you have a User model
+      ref: "User",
       required: true,
     },
     currentRole: {
@@ -17,11 +27,11 @@ const SkillSchema = new mongoose.Schema(
       required: true,
     },
     skills: {
-      type: [String],
+      type: [SkillItemSchema],
       default: [],
     },
     careerGoals: {
-      type: [String],
+      type: [String], // store as array
       default: [],
     },
     preferredPlatforms: {
@@ -39,15 +49,8 @@ const SkillSchema = new mongoose.Schema(
       required: true,
     },
     learningStyle: {
-      type: String,
-      enum: [
-        "theoretical",
-        "project-based",
-        "mixed",
-        "Project-based",
-        "Hybrid",
-      ],
-      required: true,
+      type: [String], // allow multiple styles
+      default: [],
     },
   },
   { timestamps: true }
