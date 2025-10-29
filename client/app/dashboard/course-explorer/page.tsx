@@ -8525,21 +8525,113 @@ class AIRecommendationEngine {
   constructor(userProfile, courses) {
     this.userProfile = userProfile;
     this.courses = courses;
+
+    // FIXED: Increased skill match weight significantly
     this.weights = {
-      skillMatch: 0.25,
+      skillMatch: 0.4, // Increased from 0.25
       careerGoalAlignment: 0.2,
       levelMatch: 0.15,
       platformPreference: 0.1,
-      budgetFit: 0.15,
-      popularityScore: 0.1,
-      freshnessScore: 0.05,
+      budgetFit: 0.1,
+      popularityScore: 0.03, // Reduced
+      freshnessScore: 0.02, // Reduced
     };
+  }
+
+  // FIXED: Exact and partial skill matching with scoring
+  calculateSkillMatchScore(courseSkills, userSkills) {
+    if (!courseSkills || !userSkills || userSkills.length === 0) {
+      return 0;
+    }
+
+    // Normalize user skills to array of strings
+    const normalizedUserSkills = userSkills
+      .map((skill) => {
+        const skillName = typeof skill === "object" ? skill.name : skill;
+        return skillName ? skillName.toLowerCase().trim() : "";
+      })
+      .filter(Boolean);
+
+    // Normalize course skills
+    const normalizedCourseSkills = courseSkills
+      .map((skill) => (skill ? skill.toLowerCase().trim() : ""))
+      .filter(Boolean);
+
+    let exactMatches = 0;
+    let partialMatches = 0;
+    let relatedMatches = 0;
+
+    // Define skill relationships for better matching
+    const skillRelations = {
+      react: ["reactjs", "react.js", "react native", "jsx"],
+      javascript: ["js", "es6", "node.js", "nodejs", "typescript"],
+      typescript: ["ts", "javascript"],
+      "node.js": ["nodejs", "express", "javascript", "backend"],
+      css: ["sass", "scss", "less", "styling", "flexbox", "grid"],
+      html: ["html5", "markup", "web"],
+      python: ["django", "flask", "fastapi"],
+      java: ["spring", "kotlin"],
+      aws: ["cloud", "ec2", "s3", "lambda"],
+      docker: ["containerization", "kubernetes"],
+    };
+
+    normalizedCourseSkills.forEach((courseSkill) => {
+      // Check for exact matches
+      const hasExactMatch = normalizedUserSkills.some(
+        (userSkill) => userSkill === courseSkill
+      );
+
+      if (hasExactMatch) {
+        exactMatches++;
+        return;
+      }
+
+      // Check for partial matches (but avoid false positives)
+      const hasPartialMatch = normalizedUserSkills.some((userSkill) => {
+        // Must match at least 80% of the shorter string length
+        const minLen = Math.min(userSkill.length, courseSkill.length);
+        if (minLen < 3) return false; // Avoid matching very short strings
+
+        return (
+          (courseSkill.includes(userSkill) ||
+            userSkill.includes(courseSkill)) &&
+          (userSkill.length >= courseSkill.length * 0.8 ||
+            courseSkill.length >= userSkill.length * 0.8)
+        );
+      });
+
+      if (hasPartialMatch) {
+        partialMatches++;
+        return;
+      }
+
+      // Check for related skill matches
+      const hasRelatedMatch = normalizedUserSkills.some((userSkill) => {
+        const relatedSkills = skillRelations[userSkill] || [];
+        return relatedSkills.includes(courseSkill);
+      });
+
+      if (hasRelatedMatch) {
+        relatedMatches++;
+      }
+    });
+
+    // Calculate weighted score
+    const totalCourseSkills = normalizedCourseSkills.length;
+    const exactScore = (exactMatches / totalCourseSkills) * 100;
+    const partialScore = (partialMatches / totalCourseSkills) * 60;
+    const relatedScore = (relatedMatches / totalCourseSkills) * 30;
+
+    // Bonus for having multiple exact matches
+    const matchBonus = exactMatches >= 2 ? 20 : 0;
+
+    return Math.min(100, exactScore + partialScore + relatedScore + matchBonus);
   }
 
   calculateRecommendationScore(course) {
     let score = 0;
 
-    // Validate course object
+    // Validate course
     if (!course || !course.skills || !Array.isArray(course.skills)) {
       return 0;
     }
@@ -8548,67 +8640,64 @@ class AIRecommendationEngine {
     const userGoals = this.userProfile.careerGoals || [];
     const preferredPlatforms = this.userProfile.preferredPlatforms || [];
 
-    // Skill Match Score (25%)
-    const skillMatches = course.skills.filter((skill) => {
-      if (!skill || typeof skill !== "string") return false;
-      return userSkills.some((userSkill) => {
-        if (!userSkill) return false;
-        const skillName =
-          typeof userSkill === "object" && userSkill.name
-            ? userSkill.name
-            : userSkill;
-        if (!skillName || typeof skillName !== "string") return false;
-        return (
-          skillName.toLowerCase().includes(skill.toLowerCase()) ||
-          skill.toLowerCase().includes(skillName.toLowerCase())
-        );
-      });
-    }).length;
-
-    const skillScore =
-      skillMatches > 0 ? (skillMatches / course.skills.length) * 100 : 20;
+    // 1. FIXED Skill Match Score (40%)
+    const skillScore = this.calculateSkillMatchScore(course.skills, userSkills);
     score += skillScore * this.weights.skillMatch;
 
-    // Career Goal Alignment (20%)
+    // 2. Career Goal Alignment (20%)
     const goalMatches = userGoals.filter((goal) => {
       if (!goal || typeof goal !== "string") return false;
-      return (
-        (course.category &&
-          course.category.toLowerCase().includes(goal.toLowerCase())) ||
-        (course.skills &&
-          course.skills.some((skill) => {
-            if (!skill || typeof skill !== "string") return false;
-            return goal.toLowerCase().includes(skill.toLowerCase());
-          })) ||
-        (course.title &&
-          course.title.toLowerCase().includes(goal.toLowerCase()))
-      );
+      const goalLower = goal.toLowerCase();
+
+      // Match against category
+      const categoryMatch =
+        course.category && course.category.toLowerCase().includes(goalLower);
+
+      // Match against course skills with exact or strong partial match
+      const skillMatch = course.skills.some((skill) => {
+        if (!skill) return false;
+        const skillLower = skill.toLowerCase();
+        return (
+          skillLower === goalLower ||
+          (skillLower.includes(goalLower) && goalLower.length > 3) ||
+          (goalLower.includes(skillLower) && skillLower.length > 3)
+        );
+      });
+
+      // Match against title (for specific technologies)
+      const titleMatch =
+        course.title && course.title.toLowerCase().includes(goalLower);
+
+      return categoryMatch || skillMatch || titleMatch;
     }).length;
 
-    const goalScore = goalMatches > 0 ? 100 : 30;
+    const goalScore =
+      goalMatches > 0
+        ? (goalMatches / Math.max(userGoals.length, 1)) * 100
+        : 20;
     score += goalScore * this.weights.careerGoalAlignment;
 
-    // Level Match (15%)
+    // 3. Level Match (15%)
     const levelScore = this.getLevelScore(course.level);
     score += levelScore * this.weights.levelMatch;
 
-    // Platform Preference (10%)
+    // 4. Platform Preference (10%)
     const platformScore = preferredPlatforms.includes(course.platform)
       ? 100
-      : 60;
+      : 50;
     score += platformScore * this.weights.platformPreference;
 
-    // Budget Fit (15%)
+    // 5. Budget Fit (10%)
     const budgetScore = this.getBudgetScore(course.price);
     score += budgetScore * this.weights.budgetFit;
 
-    // Popularity Score (10%)
+    // 6. Popularity Score (3%)
     const ratingScore = (course.rating / 5) * 50;
-    const studentScore = Math.min((course.students / 50000) * 50, 50);
+    const studentScore = Math.min((course.students / 100000) * 50, 50);
     const popularityScore = ratingScore + studentScore;
     score += popularityScore * this.weights.popularityScore;
 
-    // Freshness Score (5%)
+    // 7. Freshness Score (2%)
     const daysSinceUpdate = this.getDaysSinceUpdate(course.lastUpdated);
     const freshnessScore = Math.max(100 - (daysSinceUpdate / 30) * 10, 0);
     score += freshnessScore * this.weights.freshnessScore;
@@ -8618,19 +8707,20 @@ class AIRecommendationEngine {
 
   getLevelScore(courseLevel) {
     const levelMap = {
-      Beginner: { Beginner: 100, Intermediate: 80, Advanced: 40 },
-      Intermediate: { Beginner: 60, Intermediate: 100, Advanced: 80 },
-      Advanced: { Beginner: 20, Intermediate: 70, Advanced: 100 },
+      Beginner: { Beginner: 100, Intermediate: 70, Advanced: 30 },
+      Intermediate: { Beginner: 50, Intermediate: 100, Advanced: 70 },
+      Advanced: { Beginner: 20, Intermediate: 60, Advanced: 100 },
     };
+
     return levelMap[this.userProfile.experience]?.[courseLevel] || 50;
   }
 
   getBudgetScore(price) {
     switch (this.userProfile.budget) {
       case "low":
-        return price === 0 ? 100 : price < 50 ? 80 : price < 100 ? 40 : 20;
+        return price === 0 ? 100 : price <= 500 ? 80 : price <= 1000 ? 40 : 20;
       case "medium":
-        return price === 0 ? 100 : price < 100 ? 90 : price < 200 ? 70 : 40;
+        return price === 0 ? 100 : price <= 1000 ? 90 : price <= 2000 ? 70 : 40;
       case "high":
         return 100;
       default:
@@ -8661,7 +8751,6 @@ class AIRecommendationEngine {
   getRecommendationReason(course) {
     const reasons = [];
 
-    // Validate course object
     if (!course || !course.skills || !Array.isArray(course.skills)) {
       return "Recommended for you";
     }
@@ -8670,26 +8759,28 @@ class AIRecommendationEngine {
     const userGoals = this.userProfile.careerGoals || [];
 
     // Skill matches
+    const normalizedUserSkills = userSkills
+      .map((skill) => {
+        const skillName = typeof skill === "object" ? skill.name : skill;
+        return skillName ? skillName.toLowerCase() : "";
+      })
+      .filter(Boolean);
+
     const skillMatches = course.skills.filter((skill) => {
       if (!skill || typeof skill !== "string") return false;
-      return userSkills.some((userSkill) => {
-        if (!userSkill) return false;
-        const skillName =
-          typeof userSkill === "object" && userSkill.name
-            ? userSkill.name
-            : userSkill;
-        if (!skillName || typeof skillName !== "string") return false;
-        return (
-          skillName.toLowerCase().includes(skill.toLowerCase()) ||
-          skill.toLowerCase().includes(skillName.toLowerCase())
-        );
-      });
+      return normalizedUserSkills.some(
+        (userSkill) =>
+          userSkill === skill.toLowerCase() ||
+          (skill.toLowerCase().includes(userSkill) && userSkill.length > 3)
+      );
     });
+
     if (skillMatches.length > 0) {
       reasons.push(
         `Matches your ${skillMatches.slice(0, 2).join(", ")} skills`
       );
     }
+
     // Career goals
     const goalMatches = userGoals.filter((goal) => {
       if (!goal || typeof goal !== "string") return false;
@@ -8700,6 +8791,7 @@ class AIRecommendationEngine {
           course.title.toLowerCase().includes(goal.toLowerCase()))
       );
     });
+
     if (goalMatches.length > 0) {
       reasons.push(`Perfect for ${goalMatches[0]}`);
     }
@@ -8711,23 +8803,23 @@ class AIRecommendationEngine {
 
     // Highly rated
     if (course.rating >= 4.7) {
-      reasons.push(`Highly rated (${course.rating}★)`);
+      reasons.push(`Highly rated (${course.rating})`);
     }
 
     // Popular
     if (course.students > 100000) {
       reasons.push(
-        `Popular choice (${Math.floor(course.students / 1000)}k+ students)`
+        `Popular choice (${Math.floor(course.students / 1000)}k students)`
       );
     }
 
     // Free
     if (course.price === 0) {
-      reasons.push(`Free course`);
+      reasons.push("Free course");
     }
 
     // Many projects
-    if (course.projects > 10) {
+    if (course.projects >= 10) {
       reasons.push(`${course.projects} hands-on projects`);
     }
 
@@ -8746,14 +8838,14 @@ export default function CourseExplorerPage() {
   const [bookmarkedCourses, setBookmarkedCourses] = useState(new Set());
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState("grid"); // grid or list
-  
+
   const { triggerCourseRecommendation } = useNotificationTriggers();
   const { trackCourseBookmark, trackPageVisit } = useUserActivityTracker();
   const [showFilters, setShowFilters] = useState(false);
 
   // Track page visit on component mount
   useEffect(() => {
-    trackPageVisit('course-explorer');
+    trackPageVisit("course-explorer");
   }, [trackPageVisit]);
 
   const [formData, setFormData] = useState({
@@ -8777,23 +8869,30 @@ export default function CourseExplorerPage() {
       const coursesWithAI = aiEngine.getRecommendations(filteredCourses.length);
 
       setCourses(coursesWithAI);
-      
+
       // Trigger course recommendation notification only if preferences have changed
-      const recommendedCourses = coursesWithAI.filter((course: any) => course.isRecommended);
+      const recommendedCourses = coursesWithAI.filter(
+        (course: any) => course.isRecommended
+      );
       if (recommendedCourses.length > 0) {
-        const category = formData.careerGoals?.[0] || 'your interests';
-        
+        const category = formData.careerGoals?.[0] || "your interests";
+
         // Check if this is due to a preference change
         const currentPreferences = JSON.stringify(formData);
-        const lastPreferences = localStorage.getItem('lastCoursePreferences');
-        const isPreferenceChange = lastPreferences && lastPreferences !== currentPreferences;
-        
+        const lastPreferences = localStorage.getItem("lastCoursePreferences");
+        const isPreferenceChange =
+          lastPreferences && lastPreferences !== currentPreferences;
+
         // Store current preferences for next comparison
-        localStorage.setItem('lastCoursePreferences', currentPreferences);
-        
+        localStorage.setItem("lastCoursePreferences", currentPreferences);
+
         // Only trigger notification if preferences changed or it's been a while
         if (isPreferenceChange) {
-          triggerCourseRecommendation(recommendedCourses.length, category, true); // Force notify on preference change
+          triggerCourseRecommendation(
+            recommendedCourses.length,
+            category,
+            true
+          ); // Force notify on preference change
         } else if (!lastPreferences) {
           // First time visit - don't spam, but allow one notification
           triggerCourseRecommendation(recommendedCourses.length, category);
@@ -8919,26 +9018,29 @@ export default function CourseExplorerPage() {
     setBookmarkedCourses((prev) => {
       const newBookmarks = new Set(prev);
       const isBookmarking = !newBookmarks.has(courseId);
-      
+
       if (newBookmarks.has(courseId)) {
         newBookmarks.delete(courseId);
       } else {
         newBookmarks.add(courseId);
-        
+
         // Find course details and track bookmark
         const course = courses.find((c: any) => c.id === courseId);
         if (course && isBookmarking) {
           trackCourseBookmark(courseId.toString(), course.title);
         }
       }
-      
+
       // Save to localStorage
       try {
-        localStorage.setItem("courseBookmarks", JSON.stringify(Array.from(newBookmarks)));
+        localStorage.setItem(
+          "courseBookmarks",
+          JSON.stringify(Array.from(newBookmarks))
+        );
       } catch (error) {
         console.error("Error saving bookmarks:", error);
       }
-      
+
       return newBookmarks;
     });
   };
@@ -9488,7 +9590,7 @@ export default function CourseExplorerPage() {
               >
                 <div className="flex items-center gap-1 sm:gap-2">
                   <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>All ({filteredCourses.length})</span>
+                  <span>All ({mockCourses.length})</span>
                 </div>
               </TabsTrigger>
               <TabsTrigger
@@ -9532,7 +9634,7 @@ export default function CourseExplorerPage() {
           {/* All Courses Tab */}
           <TabsContent value="all" className="space-y-4">
             <CourseGrid
-              courses={filteredCourses}
+              courses={mockCourses}
               bookmarkedCourses={bookmarkedCourses}
               onToggleBookmark={toggleBookmark}
               loading={loading}
