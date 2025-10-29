@@ -1,14 +1,18 @@
 import type React from "react"
 import type { Metadata } from "next"
+import Script from "next/script" // Add this import
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
+import { LenisProvider } from "@/components/providers/lenis-provider"
 import "./globals.css"
+
 
 export const metadata: Metadata = {
   title: "Career-Path AI",
   description: "Your AI-powered career companion for professional growth",
   generator: "v0.dev",
 }
+
 
 export default function RootLayout({
   children,
@@ -32,7 +36,21 @@ html {
 }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        <LenisProvider>
+          {children}
+        </LenisProvider>
+        
+        {/* Botpress Chatbot Scripts */}
+        <Script
+          src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"
+          strategy="afterInteractive"
+        />
+        <Script
+          src="https://files.bpcontent.cloud/2025/10/03/08/20251003082306-S6S1A804.js"
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   )
 }
