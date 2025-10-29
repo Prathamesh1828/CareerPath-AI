@@ -32,8 +32,11 @@ import {
   ChevronRight,
   Filter,
   Search,
+  Download,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { downloadCareerPDF } from "@/app/utils/recommendationPdf";
 
 export default function RecommendationsPage() {
   const [recommendations, setRecommendations] = useState<any>(null);
@@ -42,6 +45,41 @@ export default function RecommendationsPage() {
     "immediate" | "shortTerm" | "longTerm"
   >("immediate");
   const [expandedCareer, setExpandedCareer] = useState<number | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  const handleDownloadPDF = async () => {
+    if (!recommendations) return;
+
+    setDownloading(true);
+
+    try {
+      // Prepare data for PDF
+      const pdfData =
+        recommendations.topRecommendations?.map((rec: any) => ({
+          career: rec.title,
+          score: parseInt(rec.match) || 85,
+          description: rec.description,
+          skills: rec.requiredSkills || [],
+          salaryRange: rec.salaryRange,
+          jobGrowth: rec.growthOutlook,
+          education: "Based on your profile",
+          topCompanies: [], // Add if available
+        })) || [];
+
+      // Call the PDF generation function
+      downloadCareerPDF(pdfData, userName);
+
+      // Reset downloading state after a delay
+      setTimeout(() => {
+        setDownloading(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download PDF. Please try again.");
+      setDownloading(false);
+    }
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("careerRecommendations");
@@ -137,6 +175,27 @@ export default function RecommendationsPage() {
           </div>
         </div>
       </div>
+
+      <Button
+        onClick={handleDownloadPDF}
+        disabled={downloading}
+        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+        size="sm"
+      >
+        {downloading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Generating...</span>
+            <span className="sm:hidden">...</span>
+          </>
+        ) : (
+          <>
+            <Download className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Download PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </>
+        )}
+      </Button>
 
       {/* Main Content */}
       <div className="px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -445,7 +504,7 @@ export default function RecommendationsPage() {
             </CardContent>
           </Card>
 
-          {/* Call-to-Action - Mobile Optimized */}
+          {/* Call-to-Action - Mobile Optimized with Navigation Links */}
           <Card
             className={`border-2 border-dashed border-purple-500 bg-gradient-to-r from-purple-50 to-blue-50 shadow-xl hover:shadow-2xl transition-all duration-500 ${
               isVisible ? "animate-fadeInUp" : "opacity-0"
@@ -467,21 +526,25 @@ export default function RecommendationsPage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex-1 sm:flex-initial"
-                  >
-                    <Rocket className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Start Learning
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-2 border-purple-300 hover:bg-purple-50 flex-1 sm:flex-initial"
-                  >
-                    <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    View Courses
-                  </Button>
+                  <Link href="/dashboard/career-roadmap" className="flex-1 sm:flex-initial">
+                    <Button
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Rocket className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                      Start Learning
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/course-explorer" className="flex-1 sm:flex-initial">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full border-2 border-purple-300 hover:bg-purple-50"
+                    >
+                      <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                      View Courses
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </CardContent>
