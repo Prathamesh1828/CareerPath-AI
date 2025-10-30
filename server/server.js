@@ -4,10 +4,10 @@ import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/UserRoutes.js";
 import SkillRoutes from "./routes/SkillRoutes.js";
-import progressRoutes from "./routes/courseprogressRoutes.js";
+// import progressRoutes from "./routes/courseProgressRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import metricsRoutes from "./routes/metricsRoutes.js";
-import courseRoutes from "./routes/courseprogressRoutes.js"; // ADD THIS LINE
+import courseRoutes from "./routes/courseProgressRoutes.js"; // ADD THIS LINE
 
 dotenv.config();
 
