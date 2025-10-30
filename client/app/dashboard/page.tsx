@@ -61,6 +61,8 @@ export default function DashboardPage() {
     careerProgress: 0,
   });
 
+  const [resumeAnalysisData, setResumeAnalysisData] = useState<any>(null);
+
   const [metrics, setMetrics] = useState({
     learningTime: 0,
     learningStreak: 0,
@@ -343,6 +345,21 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchResumeAnalysisData = () => {
+    try {
+      const resumeData = localStorage.getItem("resumeAnalysisData");
+      if (resumeData) {
+        const parsedData = JSON.parse(resumeData);
+        setResumeAnalysisData(parsedData);
+        console.log("✅ Resume analysis data loaded:", parsedData);
+        return parsedData;
+      }
+    } catch (error) {
+      console.error("❌ Error loading resume analysis data:", error);
+    }
+    return null;
+  };
+
   const fetchMetrics = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -381,6 +398,7 @@ export default function DashboardPage() {
     setIsRefreshing(true);
     await fetchMetrics();
     fetchCareerProgress();
+    fetchResumeAnalysisData();
     setTimeout(() => setIsRefreshing(false), 1000);
     toast({
       title: "Refreshed! ✨",
@@ -393,6 +411,7 @@ export default function DashboardPage() {
     fetchReviews();
     fetchMetrics();
     fetchCareerProgress();
+    const resumeData = fetchResumeAnalysisData();
     setIsVisible(true);
 
     // Listen for progress updates from career roadmap page
@@ -400,7 +419,14 @@ export default function DashboardPage() {
       fetchCareerProgress();
     };
 
+    // Listen for resume analysis updates
+    const handleResumeAnalysisComplete = (event: any) => {
+      console.log("🔄 Resume analysis completed, updating dashboard...");
+      fetchResumeAnalysisData();
+    };
+
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("resumeAnalysisComplete", handleResumeAnalysisComplete);
 
     // Check for updates from same window
     const checkForUpdates = setInterval(() => {
@@ -408,6 +434,12 @@ export default function DashboardPage() {
       if (lastUpdate) {
         fetchCareerProgress();
         localStorage.removeItem("careerProgressUpdated");
+      }
+      
+      const resumeUpdate = localStorage.getItem("resumeAnalysisUpdated");
+      if (resumeUpdate) {
+        fetchResumeAnalysisData();
+        localStorage.removeItem("resumeAnalysisUpdated");
       }
     }, 1000);
 
@@ -417,38 +449,31 @@ export default function DashboardPage() {
       fetchCareerProgress();
     }, 30000);
 
-    const resumeData = localStorage.getItem("resumeAnalysisData");
-    let storedResumeScore = 0;
-    let storedAtsScore = 0;
-
-    if (resumeData) {
-      try {
-        const parsedData = JSON.parse(resumeData);
-        storedResumeScore = parsedData.resumeScore || 0;
-        storedAtsScore = parsedData.atsScore || 0;
-      } catch (error) {
-        console.error("Error parsing resume data:", error);
-      }
-    }
-
-    const timer = setTimeout(() => {
+    // Update animated values with real data
+    const updateAnimatedValues = () => {
+      const currentResumeData = resumeData || {};
       setAnimatedValues({
-        resumeScore: storedResumeScore || 85,
-        atsScore: storedAtsScore || 78,
-        skillsMatched: 80,
+        resumeScore: currentResumeData.resumeScore || 0,
+        atsScore: currentResumeData.atsScore || 0,
+        skillsMatched: currentResumeData.skillsMatchedPercentage || 0,
         coursesCompleted: careerProgress.reduce(
           (sum, cp) => sum + cp.completedCourses,
           0
         ),
-        careerProgress: 65,
+        careerProgress: careerProgress.length > 0 
+          ? Math.round(careerProgress.reduce((sum, cp) => sum + cp.progress, 0) / careerProgress.length)
+          : 0,
       });
-    }, 500);
+    };
+
+    const timer = setTimeout(updateAnimatedValues, 500);
 
     return () => {
       clearTimeout(timer);
       clearInterval(metricsInterval);
       clearInterval(checkForUpdates);
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("resumeAnalysisComplete", handleResumeAnalysisComplete);
     };
   }, []);
 
@@ -478,7 +503,7 @@ export default function DashboardPage() {
       />
       <Script
         src="https://files.bpcontent.cloud/2025/10/03/08/20251003082306-S6S1A804.js"
-        strategy="afterinteractive"
+        strategy="afterInteractive"
       />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30">
@@ -518,6 +543,11 @@ export default function DashboardPage() {
                   </CardTitle>
                   <div className="flex items-center gap-1 mt-1">
                     <TrendingUp className="h-3 w-3 text-green-600" />
+                    {resumeAnalysisData?.fileName && (
+                      <span className="text-xs text-green-600">
+                        {resumeAnalysisData.fileName}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="p-2.5 rounded-lg bg-orange-50 group-hover:scale-110 transition-transform">
@@ -527,15 +557,23 @@ export default function DashboardPage() {
               <CardContent className="p-4 pt-0">
                 <div className="space-y-3">
                   <div className="text-3xl font-bold text-orange-600">
-                    {animatedValues.atsScore}
+                    {resumeAnalysisData ? animatedValues.resumeScore : 0}
                     <span className="text-sm text-gray-500 font-normal">
                       /100
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Compatibility check
+                    {resumeAnalysisData 
+                      ? `ATS Score: ${animatedValues.atsScore}/100`
+                      : "Upload resume for analysis"
+                    }
                   </p>
-                  <Progress value={animatedValues.atsScore} className="h-2.5" />
+                  <Progress value={resumeAnalysisData ? animatedValues.resumeScore : 0} className="h-2.5" />
+                  {!resumeAnalysisData && (
+                    <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2">
+                      📄 Upload your resume to get AI-powered analysis
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -549,6 +587,11 @@ export default function DashboardPage() {
                   </CardTitle>
                   <div className="flex items-center gap-1 mt-1">
                     <TrendingUp className="h-3 w-3 text-green-600" />
+                    {resumeAnalysisData?.lastUpdated && (
+                      <span className="text-xs text-green-600">
+                        Updated {new Date(resumeAnalysisData.lastUpdated).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="p-2.5 rounded-lg bg-green-50 group-hover:scale-110 transition-transform">
@@ -558,15 +601,23 @@ export default function DashboardPage() {
               <CardContent className="p-4 pt-0">
                 <div className="space-y-3">
                   <div className="text-3xl font-bold text-green-600">
-                    {animatedValues.skillsMatched}%
+                    {resumeAnalysisData ? animatedValues.skillsMatched : 0}%
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    3 skills to improve
+                    {resumeAnalysisData 
+                      ? `${resumeAnalysisData.skillsMatched || 0}/${resumeAnalysisData.totalSkills || 0} skills found`
+                      : "Upload resume to see skills"
+                    }
                   </p>
                   <Progress
-                    value={animatedValues.skillsMatched}
+                    value={resumeAnalysisData ? animatedValues.skillsMatched : 0}
                     className="h-2.5"
                   />
+                  {!resumeAnalysisData && (
+                    <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2">
+                      💡 Upload your resume to see skill analysis
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -818,38 +869,87 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4 p-6 pt-0">
-              {[
-                {
-                  type: "Skill Gap Alert",
-                  message:
-                    "Consider learning TypeScript to match 90% of Frontend Developer jobs",
-                  bgColor: "bg-purple-50",
-                  borderColor: "border-purple-200",
-                  textColor: "text-purple-900",
-                  icon: Target,
-                  priority: "High",
-                },
-                {
-                  type: "Course Recommendation",
-                  message:
-                    '"Advanced React Patterns" course aligns with your career goals',
-                  bgColor: "bg-blue-50",
-                  borderColor: "border-blue-200",
-                  textColor: "text-blue-900",
-                  icon: BookOpen,
-                  priority: "Medium",
-                },
-                {
-                  type: "Resume Tip",
-                  message:
-                    "Add more quantifiable achievements to boost your ATS score",
-                  bgColor: "bg-green-50",
-                  borderColor: "border-green-200",
-                  textColor: "text-green-900",
-                  icon: FileText,
-                  priority: "Low",
-                },
-              ].map((rec, index) => (
+              {(() => {
+                const recommendations = [];
+                
+                // Add resume-based recommendations if available
+                if (resumeAnalysisData) {
+                  if (resumeAnalysisData.atsScore < 70) {
+                    recommendations.push({
+                      type: "ATS Optimization",
+                      message: `Your ATS score is ${resumeAnalysisData.atsScore}/100. Upload an optimized resume to improve job application success.`,
+                      bgColor: "bg-red-50",
+                      borderColor: "border-red-200",
+                      textColor: "text-red-900",
+                      icon: AlertTriangle,
+                      priority: "High",
+                    });
+                  }
+                  
+                  if (resumeAnalysisData.skillsMatchedPercentage < 80) {
+                    recommendations.push({
+                      type: "Skill Enhancement",
+                      message: `Only ${resumeAnalysisData.skillsMatchedPercentage}% of relevant skills found. Consider adding more technical skills to your resume.`,
+                      bgColor: "bg-purple-50",
+                      borderColor: "border-purple-200",
+                      textColor: "text-purple-900",
+                      icon: Target,
+                      priority: "High",
+                    });
+                  }
+                } else {
+                  recommendations.push({
+                    type: "Resume Analysis",
+                    message: "Upload your resume to get personalized AI recommendations and skill analysis.",
+                    bgColor: "bg-blue-50",
+                    borderColor: "border-blue-200",
+                    textColor: "text-blue-900",
+                    icon: FileText,
+                    priority: "High",
+                  });
+                }
+                
+                // Add career progress recommendations
+                if (careerProgress.length > 0) {
+                  const avgProgress = Math.round(careerProgress.reduce((sum, cp) => sum + cp.progress, 0) / careerProgress.length);
+                  if (avgProgress < 50) {
+                    recommendations.push({
+                      type: "Learning Progress",
+                      message: `Your career progress is ${avgProgress}%. Continue with your learning roadmap to boost your skills.`,
+                      bgColor: "bg-green-50",
+                      borderColor: "border-green-200",
+                      textColor: "text-green-900",
+                      icon: BookOpen,
+                      priority: "Medium",
+                    });
+                  }
+                } else {
+                  recommendations.push({
+                    type: "Career Roadmap",
+                    message: "Start your learning journey by exploring career roadmaps tailored to your goals.",
+                    bgColor: "bg-purple-50",
+                    borderColor: "border-purple-200",
+                    textColor: "text-purple-900",
+                    icon: Map,
+                    priority: "Medium",
+                  });
+                }
+                
+                // Add learning time recommendation
+                if (metrics.learningTime < 60) {
+                  recommendations.push({
+                    type: "Learning Time",
+                    message: `You've spent ${formatLearningTime(metrics.learningTime)} learning this month. Aim for at least 1 hour per week for better progress.`,
+                    bgColor: "bg-yellow-50",
+                    borderColor: "border-yellow-200",
+                    textColor: "text-yellow-900",
+                    icon: Clock,
+                    priority: "Low",
+                  });
+                }
+                
+                return recommendations.slice(0, 3);
+              })().map((rec, index) => (
                 <div
                   key={index}
                   className={`p-4 ${rec.bgColor} rounded-xl border ${rec.borderColor} hover:shadow-lg transition-all cursor-pointer`}
@@ -876,6 +976,101 @@ export default function DashboardPage() {
               ))}
             </CardContent>
           </Card>
+
+          {/* Resume Insights Section - Only show when resume data is available */}
+          {resumeAnalysisData && (
+            <Card className="hover-lift shadow-md border-0">
+              <CardHeader className="p-6 pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                        Resume Insights
+                        <Sparkles className="h-4 w-4 text-yellow-500" />
+                      </CardTitle>
+                      <CardDescription className="text-sm">
+                        AI-powered analysis from your uploaded resume
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-700">
+                      Live Data
+                    </Badge>
+                    <Link href="/dashboard/resume-analyzer">
+                      <Button variant="outline" size="sm">
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Full Analysis
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 p-6 pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Strengths */}
+                  <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                    <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Strengths ({resumeAnalysisData.strengths?.length || 0})
+                    </h4>
+                    <div className="space-y-2">
+                      {resumeAnalysisData.strengths?.slice(0, 3).map((strength: string, index: number) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-green-700">{strength}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Improvement Areas */}
+                  <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
+                    <h4 className="font-semibold text-orange-800 mb-3 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Suggestions ({resumeAnalysisData.suggestions?.length || 0})
+                    </h4>
+                    <div className="space-y-2">
+                      {resumeAnalysisData.suggestions?.slice(0, 3).map((suggestion: string, index: number) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-orange-600 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-orange-700">{suggestion}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resume Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{resumeAnalysisData.resumeScore}</div>
+                    <div className="text-xs text-blue-700">Overall Score</div>
+                  </div>
+                  <div className="text-center p-3 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{resumeAnalysisData.atsScore}</div>
+                    <div className="text-xs text-purple-700">ATS Score</div>
+                  </div>
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{resumeAnalysisData.skillsMatched}</div>
+                    <div className="text-xs text-green-700">Skills Found</div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-600">{resumeAnalysisData.skillsMatchedPercentage}%</div>
+                    <div className="text-xs text-gray-700">Match Rate</div>
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3 flex items-center gap-2">
+                  <RefreshCw className="h-3 w-3" />
+                  Last updated: {new Date(resumeAnalysisData.lastUpdated).toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Reviews Section */}
           <Card className="border-0 shadow-lg">

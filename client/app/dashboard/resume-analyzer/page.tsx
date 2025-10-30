@@ -74,6 +74,15 @@ interface AnalysisData {
   weaknesses: string[];
 }
 
+// Helper function to calculate skills matched percentage
+const calculateSkillsMatchedPercentage = (keywords: any) => {
+  if (!keywords) return 0;
+  const present = keywords.present?.length || 0;
+  const missing = keywords.missing?.length || 0;
+  const total = present + missing;
+  return total > 0 ? Math.round((present / total) * 100) : 0;
+};
+
 export default function ResumeAnalyzerPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -115,18 +124,43 @@ export default function ResumeAnalyzerPage() {
         }
 
         setAnalysisData(data);
-      
-      // Track resume upload and trigger notifications
-      trackResumeUpload(file.name);
-      
-      // Trigger notifications based on analysis results
-      if (data.overallScore) {
-        triggerResumeAnalysisComplete(data.overallScore);
         
-        if (data.suggestions && data.suggestions.length > 0) {
-          triggerResumeOptimization(data.suggestions);
+        // Store resume analysis data in localStorage for dashboard
+        const resumeAnalysisData = {
+          resumeScore: data.overallScore || 0,
+          atsScore: data.atsCompatibility?.score || 0,
+          skillsMatched: data.keywords?.present?.length || 0,
+          totalSkills: (data.keywords?.present?.length || 0) + (data.keywords?.missing?.length || 0),
+          skillsMatchedPercentage: calculateSkillsMatchedPercentage(data.keywords),
+          strengths: data.strengths || [],
+          weaknesses: data.weaknesses || [],
+          suggestions: data.suggestions || [],
+          lastUpdated: new Date().toISOString(),
+          fileName: file.name,
+          personalInfo: data.personalInfo || {}
+        };
+        
+        localStorage.setItem("resumeAnalysisData", JSON.stringify(resumeAnalysisData));
+        
+        // Trigger dashboard update
+        localStorage.setItem("resumeAnalysisUpdated", Date.now().toString());
+        
+        // Dispatch custom event for real-time updates
+        window.dispatchEvent(new CustomEvent('resumeAnalysisComplete', { 
+          detail: resumeAnalysisData 
+        }));
+      
+        // Track resume upload and trigger notifications
+        trackResumeUpload(file.name);
+        
+        // Trigger notifications based on analysis results
+        if (data.overallScore) {
+          triggerResumeAnalysisComplete(data.overallScore);
+          
+          if (data.suggestions && data.suggestions.length > 0) {
+            triggerResumeOptimization(data.suggestions);
+          }
         }
-      }
     } catch (err) {
         console.error("Error:", err);
         const errorMessage =
